@@ -1,68 +1,130 @@
 #include "DiscardPile.h"
+#include "CardFactory.h"
+#include <stdexcept>
+#include "Card.h"
 
-// Constructor: Reconstruct the DiscardPile from a file
 DiscardPile::DiscardPile(std::istream &in, const CardFactory *factory)
 {
+    cards.clear(); // Clear existing cards
     std::string cardName;
-    while (in >> cardName)
-    { // Read card names from the input stream
-        Card *card = factory->getCard(cardName);
-        if (card)
+
+    while (std::getline(in, cardName))
+    {
+        if (cardName == "END_DISCARD")
         {
-            pile.push_back(card);
+            break;
+        }
+
+        try
+        {
+            // Note: Remove getFactory() call since factory is already passed in
+            Card *card = factory->getFactory()->createCard(cardName);
+            if (card)
+            {
+                cards.push_back(card);
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error loading discarded card: " << e.what() << std::endl;
         }
     }
 }
-
-// Discard a card to the pile
 DiscardPile &DiscardPile::operator+=(Card *card)
 {
-    pile.push_back(card);
+    if (card == nullptr)
+    {
+        throw std::invalid_argument("Cannot add null card to discard pile");
+    }
+    cards.push_back(card);
     return *this;
 }
 
-// Remove and return the top card from the pile
 Card *DiscardPile::pickUp()
 {
-    if (pile.empty())
+    if (cards.empty())
     {
-        return nullptr; // Return nullptr if the pile is empty
+        throw std::runtime_error("Cannot pick up from empty discard pile");
     }
-    Card *topCard = pile.back();
-    pile.pop_back();
+
+    Card *topCard = cards.back();
+    cards.pop_back();
     return topCard;
 }
 
-// Return but do not remove the top card
 Card *DiscardPile::top() const
 {
-    if (pile.empty())
+    if (cards.empty())
     {
-        return nullptr; // Return nullptr if the pile is empty
+        throw std::runtime_error("Cannot get top card from empty discard pile");
     }
-    return pile.back();
+
+    return cards.back();
 }
 
-// Print all cards in the DiscardPile
 void DiscardPile::print(std::ostream &out) const
 {
-    for (const auto &card : pile)
+    out << "Discard Pile: ";
+    for (const auto &card : cards)
     {
         card->print(out);
         out << " ";
     }
+    out << "\n";
 }
 
-// Stream insertion operator to insert only the top card
-std::ostream &operator<<(std::ostream &out, const DiscardPile &discardPile)
+std::ostream &operator<<(std::ostream &out, const DiscardPile &pile)
 {
-    if (!discardPile.pile.empty())
+    if (pile.empty())
     {
-        discardPile.pile.back()->print(out); // Print only the top card
+        out << "(empty)";
     }
-    else
+    else if (pile.top())
     {
-        out << "Empty"; // Indicate the pile is empty
+        pile.top()->print(out);
     }
     return out;
+}
+
+DiscardPile::~DiscardPile()
+{
+    for (Card *card : cards)
+    {
+        delete card;
+    }
+    cards.clear();
+}
+
+DiscardPile::DiscardPile(DiscardPile &&other) noexcept
+    : cards(std::move(other.cards))
+{
+    other.cards.clear();
+}
+
+DiscardPile &DiscardPile::operator=(DiscardPile &&other) noexcept
+{
+    if (this != &other)
+    {
+        // Clean up existing cards
+        for (Card *card : cards)
+        {
+            delete card;
+        }
+        cards = std::move(other.cards);
+        other.cards.clear();
+    }
+    return *this;
+}
+
+// Serialize method - saves to file
+void DiscardPile::serialize(std::ostream &out) const
+{
+    for (const Card *card : cards)
+    {
+        if (card)
+        {
+            out << card->getName() << "\n";
+        }
+    }
+    out << "END_DISCARD\n";
 }

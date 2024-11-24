@@ -2,30 +2,40 @@
 #define DECK_H
 
 #include <vector>
-#include <algorithm>
-#include <random>
 #include <iostream>
 #include "Card.h"
-#include "CardFactory.h"
+
+class CardFactory;
 
 class Deck : public std::vector<Card *>
 {
 public:
-    // Constructor to initialize the Deck with all cards
-    Deck();
-    Deck(const std::vector<Card *> &cards);
-
-    // Constructor to reconstruct the Deck from a file
+    // Constructor to reconstruct deck from file
     Deck(std::istream &in, const CardFactory *factory);
 
-    // Shuffles the Deck
-    void shuffle();
-
-    // Draws the top card from the Deck
+    // Draw a card from the top of the deck
     Card *draw();
 
-    // Prints all cards in the Deck
+    // Stream insertion operator
     friend std::ostream &operator<<(std::ostream &out, const Deck &deck);
+
+    // Destructor to clean up card pointers
+    ~Deck();
+
+    // Delete copy operations to prevent double deletion
+    Deck(const Deck &) = delete;
+    Deck &operator=(const Deck &) = delete;
+
+    // Move operations
+    Deck(Deck &&other) noexcept;
+    Deck &operator=(Deck &&other) noexcept;
+
+    // Default constructor (needed for CardFactory)
+    Deck() = default;
+    void serialize(std::ostream &out) const;
+
+private:
+    // Helper function to serialize deck for saving to file
 };
 
 #endif // DECK_H

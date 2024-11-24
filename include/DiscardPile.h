@@ -1,36 +1,55 @@
-#ifndef DISCARDPILE_H
-#define DISCARDPILE_H
+#ifndef DISCARD_PILE_H
+#define DISCARD_PILE_H
 
 #include <vector>
 #include <iostream>
 #include "Card.h"
-#include "CardFactory.h"
+
+class CardFactory;
 
 class DiscardPile
 {
-private:
-    // Vector to store cards
-    std::vector<Card *> pile;
-
 public:
-    DiscardPile();
-    // Constructor to reconstruct the DiscardPile from a file
+    // Default constructor
+    DiscardPile() = default;
+
+    // Constructor to reconstruct discard pile from file
     DiscardPile(std::istream &in, const CardFactory *factory);
 
-    // Discard a card to the pile
+    // Add card to the pile
     DiscardPile &operator+=(Card *card);
 
-    // Remove and return the top card from the pile
+    // Pick up and remove top card
     Card *pickUp();
 
-    // Return but do not remove the top card
+    // View top card without removing
     Card *top() const;
 
-    // Print all cards in the DiscardPile
+    // Print all cards in the pile
     void print(std::ostream &out) const;
 
-    // Stream insertion operator to insert only the top card
-    friend std::ostream &operator<<(std::ostream &out, const DiscardPile &discardPile);
+    // Stream insertion operator (prints only top card)
+    friend std::ostream &operator<<(std::ostream &out, const DiscardPile &pile);
+
+    // Destructor
+    ~DiscardPile();
+    void deserialize(std::istream &in, const CardFactory *factory);
+
+    // Delete copy operations
+    DiscardPile(const DiscardPile &) = delete;
+    DiscardPile &operator=(const DiscardPile &) = delete;
+
+    // Move operations
+    DiscardPile(DiscardPile &&other) noexcept;
+    DiscardPile &operator=(DiscardPile &&other) noexcept;
+
+    // Additional helper methods
+    bool empty() const { return cards.empty(); }
+    size_t size() const { return cards.size(); }
+    void serialize(std::ostream &out) const;
+
+private:
+    std::vector<Card *> cards;
 };
 
-#endif // DISCARDPILE_H
+#endif // DISCARD_PILE_H

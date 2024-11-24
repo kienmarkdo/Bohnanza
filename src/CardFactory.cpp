@@ -1,87 +1,125 @@
 #include "CardFactory.h"
-#include "Card.h"
-// Initialize the static instance to nullptr
-CardFactory *CardFactory::instance = nullptr;
-/**
- * Private constructor for CardFactory.
- * Initializes the deck with cards.
- */
+#include <algorithm>
+#include <random>
+#include <chrono>
+#include <stdexcept>
+
+std::unique_ptr<CardFactory> CardFactory::instance = nullptr;
+
+// Add constructor implementation
 CardFactory::CardFactory()
 {
-    initializeDeck(); // Fill the deck with the required cards
-    cardPrototypes["Blue"] = new Blue();
-    cardPrototypes["Chili"] = new Chili();
-    cardPrototypes["Stink"] = new Stink();
-    cardPrototypes["Green"] = new Green();
-    cardPrototypes["Soy"] = new soy();
-    cardPrototypes["Black"] = new black();
-    cardPrototypes["Red"] = new Red();
-    cardPrototypes["Garden"] = new garden();
-}
-/**
- * Destructor to clean up dynamically allocated cards.
- */
-CardFactory::~CardFactory()
-{
-    for (Card *card : deck)
-    {
-        delete card;
-    }
-}
-/**
- * Returns the singleton instance of the CardFactory.
- * @return A pointer to the only CardFactory instance.
- */
-CardFactory *CardFactory::getFactory()
-{
-    if (instance == nullptr)
-    {
-        instance = new CardFactory();
-    }
-    return instance;
-}
-/**
- * Helper function to initialize the deck with specific counts of each card type.
- */
-void CardFactory::initializeDeck()
-{
-    // Add cards to the deck (based on game rules, each card type has a specific count)
-    for (int i = 0; i < 20; ++i)
-        deck.push_back(new Blue()); // 20 Blue cards
-    for (int i = 0; i < 18; ++i)
-        deck.push_back(new Chili()); // 18 Chili cards
-    for (int i = 0; i < 16; ++i)
-        deck.push_back(new Stink()); // 16 Stink cards
-    for (int i = 0; i < 14; ++i)
-        deck.push_back(new Green()); // 14 Green cards
-    for (int i = 0; i < 12; ++i)
-        deck.push_back(new soy()); // 12 soy cards
-    for (int i = 0; i < 10; ++i)
-        deck.push_back(new black()); // 10 black cards
-    for (int i = 0; i < 8; ++i)
-        deck.push_back(new Red()); // 8 Red cards
-    for (int i = 0; i < 6; ++i)
-        deck.push_back(new garden()); // 6 Garden cards
-    // Shuffle the deck
-    random_device rd;
-    mt19937 g(rd());
-    shuffle(deck.begin(), deck.end(), g);
-}
-/**
- * Generates and returns a shuffled deck of 104 bean cards.
- * @return A shuffled vector of Card pointers.
- */
-vector<Card *> CardFactory::getDeck() const
-{
-    return deck; // Return the shuffled deck
+    initializeCards();
 }
 
-Card *CardFactory::getCard(const std::string &cardName) const
+// Add getFactory implementation
+CardFactory *CardFactory::getFactory()
 {
-    auto it = cardPrototypes.find(cardName);
-    if (it != cardPrototypes.end())
+    if (!instance)
     {
-        return it->second;
+        instance = std::unique_ptr<CardFactory>(new CardFactory());
     }
-    return nullptr; // Invalid card name
+    return instance.get();
+}
+void CardFactory::initializeCards()
+{
+    // Initialize all card pools according to the game requirements
+
+    // Blue - 20 cards
+    for (int i = 0; i < 20; ++i)
+    {
+        cards["Blue"].push_back(std::unique_ptr<Card>(BeanCreator<Blue>::create()));
+    }
+
+    // Chili - 18 cards
+    for (int i = 0; i < 18; ++i)
+    {
+        cards["Chili"].push_back(std::unique_ptr<Card>(BeanCreator<Chili>::create()));
+    }
+
+    // Stink - 16 cards
+    for (int i = 0; i < 16; ++i)
+    {
+        cards["Stink"].push_back(std::unique_ptr<Card>(BeanCreator<Stink>::create()));
+    }
+
+    // Green - 14 cards
+    for (int i = 0; i < 14; ++i)
+    {
+        cards["Green"].push_back(std::unique_ptr<Card>(BeanCreator<Green>::create()));
+    }
+
+    // Soy - 12 cards
+    for (int i = 0; i < 12; ++i)
+    {
+        cards["Soy"].push_back(std::unique_ptr<Card>(BeanCreator<Soy>::create()));
+    }
+
+    // Black - 10 cards
+    for (int i = 0; i < 10; ++i)
+    {
+        cards["Black"].push_back(std::unique_ptr<Card>(BeanCreator<Black>::create()));
+    }
+
+    // Red - 8 cards
+    for (int i = 0; i < 8; ++i)
+    {
+        cards["Red"].push_back(std::unique_ptr<Card>(BeanCreator<Red>::create()));
+    }
+
+    // Garden - 6 cards
+    for (int i = 0; i < 6; ++i)
+    {
+        cards["Garden"].push_back(std::unique_ptr<Card>(BeanCreator<Garden>::create()));
+    }
+}
+
+Deck CardFactory::getDeck()
+{
+    std::vector<Card *> allCards;
+    allCards.reserve(104); // Total number of cards in the game
+
+    // Add raw pointers from each card pool
+    for (const auto &[type, cardVec] : cards)
+    {
+        for (const auto &card : cardVec)
+        {
+            allCards.push_back(card.get());
+        }
+    }
+
+    // Shuffle the cards using a random number generator
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle(allCards.begin(), allCards.end(), std::default_random_engine(seed));
+
+    // Create and return a new deck with the shuffled cards
+    Deck deck;
+    deck.insert(deck.begin(), allCards.begin(), allCards.end());
+
+    return deck;
+}
+
+Card *CardFactory::createCard(const std::string &cardName)
+{
+    if (cards.find(cardName) != cards.end() && !cards[cardName].empty())
+    {
+        if (cardName == "Blue")
+            return BeanCreator<Blue>::create();
+        if (cardName == "Chili")
+            return BeanCreator<Chili>::create();
+        if (cardName == "Stink")
+            return BeanCreator<Stink>::create();
+        if (cardName == "Green")
+            return BeanCreator<Green>::create();
+        if (cardName == "Soy")
+            return BeanCreator<Soy>::create();
+        if (cardName == "Black")
+            return BeanCreator<Black>::create();
+        if (cardName == "Red")
+            return BeanCreator<Red>::create();
+        if (cardName == "Garden")
+            return BeanCreator<Garden>::create();
+    }
+
+    throw std::runtime_error("Unable to create card: " + cardName);
 }

@@ -1,137 +1,154 @@
 #include "Player.h"
+#include <stdexcept>
+#include <sstream>
 
-// Constructor: Creates a Player with a given name
 Player::Player(const std::string &playerName)
-    : name(playerName), coins(0), maxChains(2) {}
+    : name(playerName)
+{
+    // Start with two empty chains
+    chains.reserve(3); // Reserve space for potential third chain
+}
 
-// Constructor: Reconstructs a Player from a file
 Player::Player(std::istream &in, const CardFactory *factory)
 {
-    std::getline(in, name); // Read the player's name
-    in >> coins;            // Read the player's coins
-    in >> maxChains;        // Read the maximum number of chains
-    int numChains;
-    in >> numChains; // Read the number of existing chains
-    chains.resize(numChains, nullptr);
+    // Implementation will be completed when CardFactory is implemented
+    // This constructor will read the player state from a file and reconstruct it
+    chains.reserve(3);
+}
 
-    for (int i = 0; i < numChains; ++i)
+Player &Player::operator+=(int additionalCoins)
+{
+    if (additionalCoins < 0)
     {
-        std::string chainType;
-        in >> chainType;
-        if (chainType == "Red")
-        {
-            chains[i] = new Chain<Red>(in, factory);
-        }
-        else if (chainType == "Blue")
-        {
-            chains[i] = new Chain<Blue>(in, factory);
-        } // Add more types as needed
+        throw std::invalid_argument("Cannot add negative coins");
     }
-
-    hand = Hand(in, factory); // Reconstruct the player's hand
-}
-
-// Get the name of the player
-std::string Player::getName() const
-{
-    return name;
-}
-
-// Get the number of coins
-int Player::getNumCoins() const
-{
-    return coins;
-}
-
-// Add coins to the player
-Player &Player::operator+=(int numCoins)
-{
-    coins += numCoins;
+    coins += additionalCoins;
     return *this;
 }
 
-// Get the maximum number of chains
-int Player::getMaxNumChains() const
-{
-    return maxChains;
-}
-
-// Get the number of non-empty chains
 int Player::getNumChains() const
 {
     int count = 0;
     for (const auto &chain : chains)
     {
-        if (chain && chain->sell() > 0)
-        { // Check if the chain has any cards
-            ++count;
+        // Need to implement a way to check if chain is empty
+        if (chain && chain->size() > 0)
+        {
+            count++;
         }
     }
     return count;
 }
 
-// Access the chain at position i
+void Player::validateChainIndex(int index) const
+{
+    if (index < 0 || index >= static_cast<int>(chains.size()))
+    {
+        std::ostringstream oss;
+        oss << "Chain index " << index << " is out of range. Player has "
+            << chains.size() << " chains";
+        throw std::out_of_range(oss.str());
+    }
+}
+
 Chain_Base &Player::operator[](int i)
 {
-    if (i < 0 || i >= chains.size())
-    {
-        throw std::out_of_range("Invalid chain index");
-    }
+    validateChainIndex(i);
     return *chains[i];
 }
 
-// Buy a third chain (reduces coins, throws exception if not enough coins)
-void Player::buyThirdChain()
+const Chain_Base &Player::operator[](int i) const
 {
-    if (maxChains == 3)
-    {
-        throw std::logic_error("Player already has three chains");
-    }
-    if (coins < 3)
-    {
-        throw std::logic_error("NotEnoughCoins: Player does not have enough coins");
-    }
-    coins -= 3;
-    maxChains = 3; // Update the maximum chains to 3
+    validateChainIndex(i);
+    return *chains[i];
 }
 
-// Print the player's hand
-void Player::printHand(std::ostream &out, bool showAll) const
+void Player::buyThirdChain()
 {
-    if (showAll)
+    if (chains.size() >= 3)
     {
-        // Use the stream insertion operator of Hand to print all cards
+        throw std::runtime_error("Already has maximum number of chains");
+    }
+
+    if (coins < 3)
+    {
+        throw NotEnoughCoins();
+    }
+
+    coins -= 3;
+    // Note: The actual chain type will be determined when cards are added
+    chains.push_back(nullptr); // Reserve space for the third chain
+}
+
+void Player::printHand(std::ostream &out, bool all) const
+{
+    if (all)
+    {
+        // Print entire hand
         out << hand;
     }
     else
     {
-        // Manually print only the top card
-        Card *topCard = hand.top();
-        if (topCard)
+        // Print only top card
+        if (!hand.empty())
         {
-            topCard->print(out);
+            out << "Top card: ";
+            hand.top()->print(out);
+            out << "\n";
         }
         else
         {
-            out << "Hand is empty.";
+            out << "Hand is empty\n";
         }
     }
 }
 
-// Stream insertion operator to print a Player
 std::ostream &operator<<(std::ostream &out, const Player &player)
 {
-    out << player.name << "\t" << player.coins << " coins" << std::endl;
-    for (const auto &chain : player.chains)
+    out << player.name << " " << player.coins << " coins\n";
+
+    // Print each chain
+    for (size_t i = 0; i < player.chains.size(); ++i)
     {
-        if (chain)
+        if (player.chains[i])
         {
-            out << *chain; // Print each chain
+            out << "Chain " << i + 1 << ": ";
+            player.chains[i]->print(out);
+            out << "\n";
         }
         else
         {
-            out << "Empty chain" << std::endl;
+            out << "Chain " << i + 1 << ": empty\n";
         }
     }
+
     return out;
+}
+
+void Player::serialize(std::ostream &out) const
+{
+    // Store player name and coins
+    out << name << "\n";
+    out << coins << "\n";
+
+    // Write player name
+    out << name << "\n";
+
+    // Write number of coins
+    out << getNumCoins() << "\n";
+
+    // Write number of chains
+    out << chains.size() << "\n";
+
+    // Write each chain
+    for (const auto &chain : chains)
+    {
+        if (chain)
+        {
+            chain->serialize(out);
+        }
+    }
+
+    // Write hand using its serialize method
+    hand.serialize(out); // Add this line to save the player's hand
 }

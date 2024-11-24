@@ -1,44 +1,65 @@
-#ifndef CARDFACTORY_H
-#define CARDFACTORY_H
+#ifndef CARD_FACTORY_H
+#define CARD_FACTORY_H
+
 #include <vector>
-#include <algorithm>
-#include <random>
+#include <memory>
+#include <map>
 #include "Card.h"
-using namespace std;
-/**
- * Singleton class for managing card creation and providing a shuffled deck.
- * The card factory serves as a factory for all the beans cards.
- */
+#include "Deck.h"
+
 class CardFactory
 {
 public:
-    /**
-     * Returns the single instance of the CardFactory.
-     * @return A pointer to the CardFactory instance.
-     */
+    // Delete copy and assignment operations
+    CardFactory(const CardFactory &) = delete;
+    CardFactory &operator=(const CardFactory &) = delete;
+
+    // Singleton access method
     static CardFactory *getFactory();
-    std::unordered_map<std::string, Card *> cardPrototypes;
-    /**
-     * Generates a complete deck of 104 cards (as per game rules) and shuffles it.
-     * @return A shuffled vector of Card pointers.
-     */
-    vector<Card *> getDeck() const;
-    /**
-     * Destructor to clean up dynamically allocated cards.
-     */
-    ~CardFactory();
-    Card *getCard(const std::string &cardName) const;
+
+    // Get a new deck with all cards
+    Deck getDeck();
+
+    ~CardFactory()
+    {
+        std::cout << "CardFactory destructor start\n";
+        try
+        {
+            // Clear all cards
+            cards.clear();
+            std::cout << "All cards cleared\n";
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error in CardFactory destructor: " << e.what() << "\n";
+        }
+        std::cout << "CardFactory destructor end\n";
+    }
+
+    // Helper methods to create specific cards (used for loading games)
+    Card *createCard(const std::string &cardName);
+    static void cleanup()
+    {
+        std::cout << "Starting CardFactory cleanup...\n";
+        instance.reset();
+        std::cout << "CardFactory cleanup complete\n";
+    }
 
 private:
-    /**
-     * Private constructor to enforce singleton pattern.
-     */
+    // Private constructor for singleton
     CardFactory();
-    /// Static instance of the CardFactory.
-    static CardFactory *instance;
-    /// Helper function to initialize the deck with specific counts of each card type.
-    void initializeDeck();
-    /// The deck of cards managed by the factory.
-    vector<Card *> deck;
+
+    // Singleton instance
+    static std::unique_ptr<CardFactory> instance;
+
+    // Single container for all cards
+    std::map<std::string, std::vector<std::unique_ptr<Card>>> cards;
+
+    // Helper method to initialize card pools
+    void initializeCards();
+
+    // Helper method to get all cards for deck creation
+    std::vector<Card *> getAllCards() const;
 };
-#endif
+
+#endif // CARD_FACTORY_H

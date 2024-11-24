@@ -1,67 +1,144 @@
 #include "TradeArea.h"
+#include <algorithm>
+#include "CardFactory.h"
+#include <stdexcept>
 
-// Constructor: Reconstruct the TradeArea from a file
 TradeArea::TradeArea(std::istream &in, const CardFactory *factory)
 {
+    cards.clear(); // Clear existing cards
     std::string cardName;
-    while (in >> cardName)
-    { // Read card names from the input stream
-        Card *card = factory->getCard(cardName);
-        if (card)
+
+    while (std::getline(in, cardName))
+    {
+        if (cardName == "END_TRADE")
         {
-            cards.push_back(card);
+            break;
+        }
+
+        try
+        {
+            Card *card = factory->getFactory()->createCard(cardName);
+            if (card)
+            {
+                cards.push_back(card);
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error loading trade area card: " << e.what() << std::endl;
         }
     }
 }
 
-// Adds a card to the TradeArea
 TradeArea &TradeArea::operator+=(Card *card)
 {
+    if (card == nullptr)
+    {
+        throw std::invalid_argument("Cannot add null card to trade area");
+    }
     cards.push_back(card);
     return *this;
 }
 
-// Checks if the card can be legally added to the TradeArea
 bool TradeArea::legal(Card *card) const
 {
-    for (const auto &c : cards)
+    if (card == nullptr)
     {
-        if (c->getName() == card->getName())
-        {
-            return true;
-        }
+        return false;
     }
-    return false;
-}
 
-// Removes and returns a card of the specified bean name
-Card *TradeArea::trade(const std::string &beanName)
-{
-    for (auto it = cards.begin(); it != cards.end(); ++it)
+    // Empty trade area always accepts cards
+    if (cards.empty())
     {
-        if ((*it)->getName() == beanName)
-        {
-            Card *card = *it;
-            cards.erase(it);
-            return card;
-        }
+        return true;
     }
-    return nullptr; // Return nullptr if no matching card is found
+
+    // Check if there's already a card of the same type
+    return std::any_of(cards.begin(), cards.end(),
+                       [card](const Card *existing)
+                       {
+                           return existing->getName() == card->getName();
+                       });
 }
 
-// Returns the number of cards in the TradeArea
-int TradeArea::numCards() const
+Card *TradeArea::trade(const std::string &bean)
 {
-    return cards.size();
+    // Find the first card matching the bean name
+    auto it = std::find_if(cards.begin(), cards.end(),
+                           [&bean](const Card *card)
+                           {
+                               return card->getName() == bean;
+                           });
+
+    if (it == cards.end())
+    {
+        throw std::runtime_error("No matching bean card found in trade area");
+    }
+
+    // Remove and return the card
+    Card *tradedCard = *it;
+    cards.erase(it);
+    return tradedCard;
 }
 
-// Stream insertion operator to print all cards in the TradeArea
+bool TradeArea::contains(const std::string &beanName) const
+{
+    return std::any_of(cards.begin(), cards.end(),
+                       [&beanName](const Card *card)
+                       {
+                           return card->getName() == beanName;
+                       });
+}
+
 std::ostream &operator<<(std::ostream &out, const TradeArea &tradeArea)
 {
+    out << "Trade Area: ";
     for (const auto &card : tradeArea.cards)
     {
         card->print(out);
         out << " ";
     }
     return out;
+}
+
+TradeArea::~TradeArea()
+{
+    for (Card *card : cards)
+    {
+        delete card;
+    }
+    cards.clear();
+}
+
+TradeArea::TradeArea(TradeArea &&other) noexcept
+    : cards(std::move(other.cards))
+{
+    other.cards.clear();
+}
+
+TradeArea &TradeArea::operator=(TradeArea &&other) noexcept
+{
+    if (this != &other)
+    {
+        // Clean up existing cards
+        for (Card *card : cards)
+        {
+            delete card;
+        }
+        cards = std::move(other.cards);
+        other.cards.clear();
+    }
+    return *this;
+}
+
+void TradeArea::serialize(std::ostream &out) const
+{
+    // Store the number of cards first
+    out << cards.size() << "\n";
+
+    // Store each card's type
+    for (const Card *card : cards)
+    {
+        out << card->getName() << "\n";
+    }
 }

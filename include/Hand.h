@@ -1,35 +1,63 @@
 #ifndef HAND_H
 #define HAND_H
 
-#include <deque>
+#include <list>
+#include <queue>
 #include <iostream>
 #include "Card.h"
-#include "CardFactory.h"
+
+class CardFactory;
 
 class Hand
 {
-private:
-    std::deque<Card *> cards; // Deque to hold the cards in the hand
-
 public:
-    // Constructor to reconstruct the Hand from a file
-    Hand();
+    // Default constructor
+    Hand() = default;
+
+    // Constructor to reconstruct hand from file
     Hand(std::istream &in, const CardFactory *factory);
 
-    // Adds a card to the rear of the hand
+    // Add card to rear of hand
     Hand &operator+=(Card *card);
 
-    // Returns and removes the top card from the player's hand
+    // Play and remove top card
     Card *play();
 
-    // Returns but does not remove the top card from the player's hand
+    // Get but don't remove top card
     Card *top() const;
 
-    // Returns and removes the card at the given index
+    // Get and remove card at specific index
     Card *operator[](int index);
 
-    // Prints all the cards in the hand
+    // Stream insertion operator
     friend std::ostream &operator<<(std::ostream &out, const Hand &hand);
+
+    // Destructor
+    ~Hand();
+
+    // Delete copy operations
+    Hand(const Hand &) = delete;
+    Hand &operator=(const Hand &) = delete;
+
+    // Move operations
+    Hand(Hand &&other) noexcept;
+    Hand &operator=(Hand &&other) noexcept;
+
+    // Additional helper methods
+    bool empty() const { return cards.empty(); }
+    int size() const { return cards.size(); }
+
+    // Method to get const reference to underlying list (for viewing)
+    const std::list<Card *> &getCards() const { return cards; }
+    void serialize(std::ostream &out) const;
+
+private:
+    std::list<Card *> cards; // Using list for efficient random access removal
+
+    // Helper function to serialize hand for saving to file
+
+    // Helper to validate index
+    void validateIndex(int index) const;
 };
 
 #endif // HAND_H

@@ -1,127 +1,159 @@
 #ifndef CARD_H
 #define CARD_H
 
-#include <iostream>
 #include <string>
-using namespace std; // Using this globally for simplicity in this project
+#include <ostream>
+#include <iostream> // Add this for cout, cerr
 
-/**
- * Abstract base class for Card
- * Represents a general card in the game with basic functionality to retrieve its name,
- * print its representation, and determine cards needed for coin levels.
- */
+// Forward declaration
+class CardFactory;
+
 class Card
 {
 public:
-    /**
-     * Pure virtual method to get the number of cards required to earn a specific number of coins.
-     * @param coins The number of coins to check.
-     * @return Number of cards required.
-     */
     virtual int getCardsPerCoin(int coins) const = 0;
+    virtual std::string getName() const = 0;
+    virtual void print(std::ostream &out) const = 0;
 
-    /**
-     * Pure virtual method to get the name of the card.
-     * @return Name of the card as a string.
-     */
-    virtual string getName() const = 0;
+    Card(const Card &) = delete;
+    Card &operator=(const Card &) = delete;
 
-    /**
-     * Pure virtual method to print the card's representation.
-     * @param out Output stream to print to.
-     */
-    virtual void print(ostream &out) const = 0;
+    friend std::ostream &operator<<(std::ostream &out, const Card &card);
 
-    /// Virtual destructor for proper cleanup in derived classes.
-    virtual ~Card() = default;
+    virtual ~Card()
+    {
+        try
+        {
+            std::cout << "Card destructor called\n"; // Remove getName() call
+        }
+        catch (...)
+        {
+            std::cerr << "Error in Card destructor\n";
+        }
+    }
+
+protected:
+    Card() = default;
 };
 
-/**
- * Represents a Blue card in the game.
- */
+// Base factory method for beans
+template <typename T>
+class BeanCreator
+{
+    friend class CardFactory;
+
+public:
+    static T *create()
+    {
+        return new T();
+    }
+
+private:
+    BeanCreator() = default;
+};
+
 class Blue : public Card
 {
+    friend class BeanCreator<Blue>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Blue"; }
+    void print(std::ostream &out) const override { out << 'B'; }
+
+private:
+    Blue() = default;
 };
 
-/**
- * Represents a Chili card in the game.
- */
 class Chili : public Card
 {
+    friend class BeanCreator<Chili>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Chili"; }
+    void print(std::ostream &out) const override { out << 'C'; }
+
+private:
+    Chili() = default;
 };
 
-/**
- * Represents a Stink card in the game.
- */
 class Stink : public Card
 {
+    friend class BeanCreator<Stink>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Stink"; }
+    void print(std::ostream &out) const override { out << 'S'; }
+
+private:
+    Stink() = default;
 };
 
-/**
- * Represents a Green card in the game.
- */
 class Green : public Card
 {
+    friend class BeanCreator<Green>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Green"; }
+    void print(std::ostream &out) const override { out << 'G'; }
+
+private:
+    Green() = default;
 };
 
-/**
- * Represents a soy card in the game.
- */
-class soy : public Card
+class Soy : public Card
 {
+    friend class BeanCreator<Soy>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Soy"; }
+    void print(std::ostream &out) const override { out << 's'; }
+
+private:
+    Soy() = default;
 };
 
-/**
- * Represents a black card in the game.
- */
-class black : public Card
+class Black : public Card
 {
+    friend class BeanCreator<Black>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Black"; }
+    void print(std::ostream &out) const override { out << 'B'; }
+
+private:
+    Black() = default;
 };
 
-/**
- * Represents a Red card in the game.
- */
 class Red : public Card
 {
+    friend class BeanCreator<Red>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Red"; }
+    void print(std::ostream &out) const override { out << 'R'; }
+
+private:
+    Red() = default;
 };
 
-/**
- * Represents a garden card in the game.
- */
-class garden : public Card
+class Garden : public Card
 {
+    friend class BeanCreator<Garden>;
+
 public:
     int getCardsPerCoin(int coins) const override;
-    string getName() const override;
-    void print(ostream &out) const override;
+    std::string getName() const override { return "Garden"; }
+    void print(std::ostream &out) const override { out << 'G'; }
+
+private:
+    Garden() = default;
 };
 
-#endif
+#endif // CARD_H
