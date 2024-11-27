@@ -2,40 +2,42 @@
 #define DECK_H
 
 #include <vector>
+#include <memory>
 #include <iostream>
 #include "Card.h"
 
 class CardFactory;
 
-class Deck : public std::vector<Card *>
+class Deck
 {
+private:
+    std::vector<std::unique_ptr<Card>> cards;
+
 public:
-    // Constructor to reconstruct deck from file
+    // Constructors
+    Deck() = default;
     Deck(std::istream &in, const CardFactory *factory);
 
-    // Draw a card from the top of the deck
-    Card *draw();
+    // Move operations
+    Deck(Deck &&) noexcept = default;
+    Deck &operator=(Deck &&) noexcept = default;
 
-    // Stream insertion operator
-    friend std::ostream &operator<<(std::ostream &out, const Deck &deck);
-
-    // Destructor to clean up card pointers
-    ~Deck();
-
-    // Delete copy operations to prevent double deletion
+    // Delete copy operations
     Deck(const Deck &) = delete;
     Deck &operator=(const Deck &) = delete;
 
-    // Move operations
-    Deck(Deck &&other) noexcept;
-    Deck &operator=(Deck &&other) noexcept;
+    // Core functionality
+    std::unique_ptr<Card> draw();
+    void addCard(std::unique_ptr<Card> card);
+    bool empty() const { return cards.empty(); }
+    size_t size() const { return cards.size(); }
 
-    // Default constructor (needed for CardFactory)
-    Deck() = default;
+    // Serialization
     void serialize(std::ostream &out) const;
+    friend std::ostream &operator<<(std::ostream &out, const Deck &deck);
 
-private:
-    // Helper function to serialize deck for saving to file
+    // Destructor (can be defaulted since using unique_ptr)
+    ~Deck() = default;
 };
 
 #endif // DECK_H

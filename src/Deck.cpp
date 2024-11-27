@@ -5,7 +5,7 @@
 
 Deck::Deck(std::istream &in, const CardFactory *factory)
 {
-    this->clear();
+    cards.clear();
     std::string cardName;
 
     while (std::getline(in, cardName))
@@ -17,10 +17,10 @@ Deck::Deck(std::istream &in, const CardFactory *factory)
 
         try
         {
-            Card *card = factory->getFactory()->createCard(cardName);
+            auto card = factory->getFactory()->createCard(cardName);
             if (card)
             {
-                this->push_back(card);
+                cards.push_back(std::move(card));
             }
         }
         catch (const std::exception &e)
@@ -30,65 +30,30 @@ Deck::Deck(std::istream &in, const CardFactory *factory)
     }
 }
 
-Card *Deck::draw()
+std::unique_ptr<Card> Deck::draw()
 {
-    if (this->empty())
+    if (cards.empty())
     {
         throw std::runtime_error("Cannot draw from empty deck");
     }
 
-    // Get the top card
-    Card *card = this->back();
-
-    // Remove it from the deck
-    this->pop_back();
-
-    return card;
+    std::unique_ptr<Card> topCard = std::move(cards.back());
+    cards.pop_back();
+    return topCard;
 }
 
-std::ostream &operator<<(std::ostream &out, const Deck &deck)
+void Deck::addCard(std::unique_ptr<Card> card)
 {
-    // Print all cards in the deck
-    for (const auto &card : deck)
+    if (!card)
     {
-        card->print(out);
-        out << " ";
+        throw std::invalid_argument("Cannot add null card to deck");
     }
-    return out;
-}
-
-Deck::~Deck()
-{
-
-    this->clear();
-}
-
-Deck::Deck(Deck &&other) noexcept
-    : std::vector<Card *>(std::move(other))
-{
-    // The vector move constructor will handle the pointer transfer
-}
-
-Deck &Deck::operator=(Deck &&other) noexcept
-{
-    if (this != &other)
-    {
-        // Clean up existing cards
-        for (Card *card : *this)
-        {
-            delete card;
-        }
-
-        // Move the vector contents
-        std::vector<Card *>::operator=(std::move(other));
-    }
-    return *this;
+    cards.push_back(std::move(card));
 }
 
 void Deck::serialize(std::ostream &out) const
 {
-    // Store the number of cards first
-    for (const Card *card : *this)
+    for (const auto &card : cards)
     {
         if (card)
         {
@@ -98,11 +63,15 @@ void Deck::serialize(std::ostream &out) const
     out << "END_DECK\n";
 }
 
-// bool Deck::empty() const
-// {
-//     if (this == nullptr)
-//     {
-//         return true; // Consider null deck as empty
-//     }
-//     return std::vector<Card *>::empty();
-// }
+std::ostream &operator<<(std::ostream &out, const Deck &deck)
+{
+    for (const auto &card : deck.cards)
+    {
+        if (card)
+        {
+            card->print(out);
+            out << " ";
+        }
+    }
+    return out;
+}

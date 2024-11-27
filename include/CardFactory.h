@@ -14,18 +14,28 @@ public:
     CardFactory(const CardFactory &) = delete;
     CardFactory &operator=(const CardFactory &) = delete;
 
-    // Singleton access method
-    static CardFactory *getFactory();
+    // Singleton access method - returns shared_ptr instead of raw pointer
+    static std::shared_ptr<CardFactory> getFactory();
 
     // Get a new deck with all cards
-    Deck getDeck();
+    std::unique_ptr<Deck> getDeck();
+
+    // Helper methods to create specific cards (used for loading games)
+    std::unique_ptr<Card> createCard(const std::string &cardName);
+
+    // Cleanup method
+    static void cleanup()
+    {
+        std::cout << "Starting CardFactory cleanup...\n";
+        instance.reset();
+        std::cout << "CardFactory cleanup complete\n";
+    }
 
     ~CardFactory()
     {
         std::cout << "CardFactory destructor start\n";
         try
         {
-            // Clear all cards
             cards.clear();
             std::cout << "All cards cleared\n";
         }
@@ -36,30 +46,18 @@ public:
         std::cout << "CardFactory destructor end\n";
     }
 
-    // Helper methods to create specific cards (used for loading games)
-    Card *createCard(const std::string &cardName);
-    static void cleanup()
-    {
-        std::cout << "Starting CardFactory cleanup...\n";
-        instance.reset();
-        std::cout << "CardFactory cleanup complete\n";
-    }
-
 private:
     // Private constructor for singleton
     CardFactory();
 
     // Singleton instance
-    static std::unique_ptr<CardFactory> instance;
+    static std::shared_ptr<CardFactory> instance;
 
     // Single container for all cards
     std::map<std::string, std::vector<std::unique_ptr<Card>>> cards;
 
     // Helper method to initialize card pools
     void initializeCards();
-
-    // Helper method to get all cards for deck creation
-    std::vector<Card *> getAllCards() const;
 };
 
 #endif // CARD_FACTORY_H

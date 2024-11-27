@@ -2,7 +2,7 @@
 #define HAND_H
 
 #include <list>
-#include <queue>
+#include <memory>
 #include <iostream>
 #include "Card.h"
 
@@ -17,46 +17,36 @@ public:
     // Constructor to reconstruct hand from file
     Hand(std::istream &in, const CardFactory *factory);
 
-    // Add card to rear of hand
-    Hand &operator+=(Card *card);
-
-    // Play and remove top card
-    Card *play();
-
-    // Get but don't remove top card
-    Card *top() const;
-
-    // Get and remove card at specific index
-    Card *operator[](int index);
-
-    // Stream insertion operator
-    friend std::ostream &operator<<(std::ostream &out, const Hand &hand);
-
-    // Destructor
-    ~Hand();
+    // Move operations
+    Hand(Hand &&) noexcept = default;
+    Hand &operator=(Hand &&) noexcept = default;
 
     // Delete copy operations
     Hand(const Hand &) = delete;
     Hand &operator=(const Hand &) = delete;
 
-    // Move operations
-    Hand(Hand &&other) noexcept;
-    Hand &operator=(Hand &&other) noexcept;
+    // Core functionality
+    Hand &operator+=(std::unique_ptr<Card> card);
+    std::unique_ptr<Card> play();
+    const Card *top() const;
+    std::unique_ptr<Card> operator[](int index);
 
-    // Additional helper methods
+    // Utility methods
     bool empty() const { return cards.empty(); }
-    int size() const { return cards.size(); }
-
-    // Method to get const reference to underlying list (for viewing)
-    const std::list<Card *> &getCards() const { return cards; }
+    size_t size() const { return cards.size(); }
     void serialize(std::ostream &out) const;
 
+    // Stream operator
+    friend std::ostream &operator<<(std::ostream &out, const Hand &hand);
+
+    // View access to cards (returns const references only)
+    const std::list<std::unique_ptr<Card>> &getCards() const { return cards; }
+
+    // Destructor can be defaulted due to smart pointers
+    ~Hand() = default;
+
 private:
-    std::list<Card *> cards; // Using list for efficient random access removal
-
-    // Helper function to serialize hand for saving to file
-
-    // Helper to validate index
+    std::list<std::unique_ptr<Card>> cards;
     void validateIndex(int index) const;
 };
 

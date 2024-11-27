@@ -17,10 +17,10 @@ Hand::Hand(std::istream &in, const CardFactory *factory)
 
         try
         {
-            Card *card = factory->getFactory()->createCard(cardName);
+            auto card = factory->getFactory()->createCard(cardName);
             if (card)
             {
-                *this += card; // Use operator+= to maintain sorting
+                *this += std::move(card);
             }
         }
         catch (const std::exception &e)
@@ -30,19 +30,19 @@ Hand::Hand(std::istream &in, const CardFactory *factory)
     }
 }
 
-Hand &Hand::operator+=(Card *card)
+Hand &Hand::operator+=(std::unique_ptr<Card> card)
 {
-    if (card == nullptr)
+    if (!card)
     {
         throw std::invalid_argument("Cannot add null card to hand");
     }
 
     // Add card to back of list (rear of hand)
-    cards.push_back(card);
+    cards.push_back(std::move(card));
     return *this;
 }
 
-Card *Hand::play()
+std::unique_ptr<Card> Hand::play()
 {
     if (cards.empty())
     {
@@ -50,19 +50,19 @@ Card *Hand::play()
     }
 
     // Remove and return first card (front of hand)
-    Card *topCard = cards.front();
+    std::unique_ptr<Card> topCard = std::move(cards.front());
     cards.pop_front();
     return topCard;
 }
 
-Card *Hand::top() const
+const Card *Hand::top() const
 {
     if (cards.empty())
     {
         throw std::runtime_error("Cannot get top card from empty hand");
     }
 
-    return cards.front();
+    return cards.front().get();
 }
 
 void Hand::validateIndex(int index) const
@@ -75,16 +75,15 @@ void Hand::validateIndex(int index) const
     }
 }
 
-Card *Hand::operator[](int index)
+std::unique_ptr<Card> Hand::operator[](int index)
 {
     validateIndex(index);
 
     // Find the card at the specified index
-    auto it = cards.begin();
-    std::advance(it, index);
+    auto it = std::next(cards.begin(), index);
 
-    // Remove and return the card
-    Card *card = *it;
+    // Move ownership of the card and remove it from the list
+    std::unique_ptr<Card> card = std::move(*it);
     cards.erase(it);
     return card;
 }
@@ -100,51 +99,9 @@ std::ostream &operator<<(std::ostream &out, const Hand &hand)
     return out;
 }
 
-Hand::~Hand()
-{
-
-    std::cout << "Hand destructor start\n";
-    try
-    {
-        std::cout << "Starting to clear cards...\n";
-        if (!cards.empty())
-        {
-            cards.clear(); // Just clear the list, don't delete the cards
-        }
-        std::cout << "Cards cleared successfully\n";
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error clearing hand: " << e.what() << "\n";
-    }
-    std::cout << "Hand destructor end\n";
-}
-
-Hand::Hand(Hand &&other) noexcept
-    : cards(std::move(other.cards))
-{
-    other.cards.clear();
-}
-
-Hand &Hand::operator=(Hand &&other) noexcept
-{
-    if (this != &other)
-    {
-        // Clean up existing cards
-        for (Card *card : cards)
-        {
-            delete card;
-        }
-        cards = std::move(other.cards);
-        other.cards.clear();
-    }
-    return *this;
-}
-
 void Hand::serialize(std::ostream &out) const
 {
-    // Write number of cards
-    for (const Card *card : cards)
+    for (const auto &card : cards)
     {
         if (card)
         {

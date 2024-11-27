@@ -5,15 +5,16 @@
 Player::Player(const std::string &playerName)
     : name(playerName)
 {
-    // Start with two empty chains
-    chains.reserve(3); // Reserve space for potential third chain
+    chains.reserve(3);
+    // Start with 2 empty chains (nullptr represents an empty chain)
+    chains.push_back(nullptr);
+    chains.push_back(nullptr);
 }
 
 Player::Player(std::istream &in, const CardFactory *factory)
 {
-    // Implementation will be completed when CardFactory is implemented
-    // This constructor will read the player state from a file and reconstruct it
     chains.reserve(3);
+    // Implementation for loading from file will be updated when needed
 }
 
 Player &Player::operator+=(int additionalCoins)
@@ -28,16 +29,9 @@ Player &Player::operator+=(int additionalCoins)
 
 int Player::getNumChains() const
 {
-    int count = 0;
-    for (const auto &chain : chains)
-    {
-        // Need to implement a way to check if chain is empty
-        if (chain && chain->size() > 0)
-        {
-            count++;
-        }
-    }
-    return count;
+    return std::count_if(chains.begin(), chains.end(),
+                         [](const auto &chain)
+                         { return chain && chain->size() > 0; });
 }
 
 void Player::validateChainIndex(int index) const
@@ -76,7 +70,6 @@ void Player::buyThirdChain()
     }
 
     coins -= 3;
-    // Note: The actual chain type will be determined when cards are added
     chains.push_back(nullptr); // Reserve space for the third chain
 }
 
@@ -84,17 +77,18 @@ void Player::printHand(std::ostream &out, bool all) const
 {
     if (all)
     {
-        // Print entire hand
         out << hand;
     }
     else
     {
-        // Print only top card
         if (!hand.empty())
         {
             out << "Top card: ";
-            hand.top()->print(out);
-            out << "\n";
+            if (const Card *top = hand.top())
+            {
+                top->print(out);
+                out << "\n";
+            }
         }
         else
         {
@@ -103,52 +97,48 @@ void Player::printHand(std::ostream &out, bool all) const
     }
 }
 
-std::ostream &operator<<(std::ostream &out, const Player &player)
-{
-    out << player.name << " " << player.coins << " coins\n";
-
-    // Print each chain
-    for (size_t i = 0; i < player.chains.size(); ++i)
-    {
-        if (player.chains[i])
-        {
-            out << "Chain " << i + 1 << ": ";
-            player.chains[i]->print(out);
-            out << "\n";
-        }
-        else
-        {
-            out << "Chain " << i + 1 << ": empty\n";
-        }
-    }
-
-    return out;
-}
-
 void Player::serialize(std::ostream &out) const
 {
-    // Store player name and coins
     out << name << "\n";
     out << coins << "\n";
-
-    // Write player name
-    out << name << "\n";
-
-    // Write number of coins
-    out << getNumCoins() << "\n";
-
-    // Write number of chains
     out << chains.size() << "\n";
 
-    // Write each chain
     for (const auto &chain : chains)
     {
         if (chain)
         {
             chain->serialize(out);
         }
+        else
+        {
+            out << "EMPTY_CHAIN\n";
+        }
     }
 
-    // Write hand using its serialize method
-    hand.serialize(out); // Add this line to save the player's hand
+    hand.serialize(out);
+}
+
+std::ostream &operator<<(std::ostream &out, const Player &player)
+{
+    // Print player name and coins line with proper spacing
+    out << std::left << player.name << "\t" << player.coins << " coins\n";
+
+    // Print each chain with proper spacing
+    for (const auto &chain : player.chains)
+    {
+        if (chain) // if chain exists
+        {
+            // Print chain type with same tab alignment as name
+            out << chain->getType() << "\t";
+            // Print the chain contents
+            chain->print(out);
+            out << "\n";
+        }
+        else // empty chain
+        {
+            out << "empty\t\n";
+        }
+    }
+
+    return out;
 }

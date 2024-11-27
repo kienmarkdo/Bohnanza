@@ -4,12 +4,11 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <memory>
 #include "Card.h"
-
-// Forward declaration
+#include "CardFactory.h"
 class CardFactory;
 
-// Custom exception for illegal card types
 class IllegalType : public std::exception
 {
 public:
@@ -19,7 +18,6 @@ public:
     }
 };
 
-// Abstract base class for chains
 class Chain_Base
 {
 public:
@@ -28,8 +26,8 @@ public:
     virtual void serialize(std::ostream &out) const = 0;
     virtual void print(std::ostream &out) const = 0;
     virtual int size() const = 0;
-
     virtual std::string getType() const = 0;
+    virtual Chain_Base &operator+=(std::unique_ptr<Card> card) = 0;
 };
 
 template <typename T>
@@ -38,68 +36,75 @@ class Chain : public Chain_Base
     static_assert(std::is_base_of<Card, T>::value, "Template parameter must be derived from Card");
 
 public:
-    // Default constructor
+    // Constructors
     Chain() = default;
-    ~Chain()
-    {
-        this->clear();
-    }
-    // Constructor to reconstruct chain from file
     Chain(std::istream &in, const CardFactory *factory);
 
-    Chain<T> &operator+=(Card *card);
-    void serialize(std::ostream &out) const override
+    // Move operations
+    Chain(Chain &&) noexcept = default;
+    Chain &operator=(Chain &&) noexcept = default;
+
+    // Delete copy operations
+    Chain(const Chain &) = delete;
+    Chain &operator=(const Chain &) = delete;
+
+    // Core functionality
+    Chain_Base &operator+=(std::unique_ptr<Card> card) override
     {
-        // Save chain type
-        out << T().getName() << "\n"; // Create temporary T to get name
-
-        // Save number of cards (optional, but helpful)
-        out << this->size() << "\n";
-
-        // Save cards in chain
-        for (const Card *card : *this)
+        if (auto *typedCard = dynamic_cast<T *>(card.get()))
         {
-            if (card)
+            cards.push_back(std::unique_ptr<T>(static_cast<T *>(card.release())));
+            return *this;
+        }
+        throw IllegalType();
+    }
+
+    int sell() override
+    {
+        if (cards.empty())
+            return 0;
+
+        int numCards = cards.size();
+        for (int coins = 4; coins > 0; --coins)
+        {
+            if (numCards >= cards.front()->getCardsPerCoin(coins))
             {
-                out << card->getName() << "\n";
+                return coins;
             }
         }
-        out << "END_CHAIN\n";
-    } // Add card to the chain
-    // Count cards and return number of coins
-    int sell() override;
+        return 0;
+    }
 
-    // Return number of cards in chain
+    // Getters
     int size() const override { return cards.size(); }
 
-    // Get chain type
     std::string getType() const override
     {
         if (!cards.empty())
         {
             return cards[0]->getName();
         }
-        // Instead of creating a temporary object, use type traits
-        if (std::is_same<T, Blue>::value)
+
+        if constexpr (std::is_same_v<T, Blue>)
             return "Blue";
-        if (std::is_same<T, Chili>::value)
+        if constexpr (std::is_same_v<T, Chili>)
             return "Chili";
-        if (std::is_same<T, Stink>::value)
+        if constexpr (std::is_same_v<T, Stink>)
             return "Stink";
-        if (std::is_same<T, Green>::value)
+        if constexpr (std::is_same_v<T, Green>)
             return "Green";
-        if (std::is_same<T, Soy>::value)
+        if constexpr (std::is_same_v<T, Soy>)
             return "Soy";
-        if (std::is_same<T, Black>::value)
+        if constexpr (std::is_same_v<T, Black>)
             return "Black";
-        if (std::is_same<T, Red>::value)
+        if constexpr (std::is_same_v<T, Red>)
             return "Red";
-        if (std::is_same<T, Garden>::value)
+        if constexpr (std::is_same_v<T, Garden>)
             return "Garden";
         return "Unknown";
     }
 
-    // Print function
+    // Display methods
     void print(std::ostream &out) const override
     {
         out << getType() << " ";
@@ -110,86 +115,58 @@ public:
         }
     }
 
-    // Stream insertion operator
-    friend std::ostream &operator<<(std::ostream &out, const Chain<T> &chain)
+    void serialize(std::ostream &out) const override
+    {
+        out << getType() << "\n";
+        out << size() << "\n";
+        for (const auto &card : cards)
+        {
+            out << card->getName() << "\n";
+        }
+        out << "END_CHAIN\n";
+    }
+
+    friend std::ostream &operator<<(std::ostream &out, const Chain &chain)
     {
         chain.print(out);
         return out;
     }
 
-    // Destructor
-    // ~Chain()
-    // {
-    //     for (auto card : cards)
-    //     {
-    //         delete card;
-    //     }
-    // }
-
-    // Delete copy operations
-    Chain(const Chain &) = delete;
-    Chain &operator=(const Chain &) = delete;
-
-    // Move operations
-    Chain(Chain &&other) noexcept : cards(std::move(other.cards))
-    {
-        other.cards.clear();
-    }
-
-    Chain &operator=(Chain &&other) noexcept
-    {
-        if (this != &other)
-        {
-            for (auto card : cards)
-            {
-                delete card;
-            }
-            cards = std::move(other.cards);
-            other.cards.clear();
-        }
-        return *this;
-    }
+    // Destructor can be defaulted since using smart pointers
+    ~Chain() = default;
 
 private:
-    std::vector<T *> cards;
+    std::vector<std::unique_ptr<T>> cards;
 };
 
-// Template implementation
-template <typename T>
-Chain<T> &Chain<T>::operator+=(Card *card)
-{
-    T *typedCard = dynamic_cast<T *>(card);
-    if (!typedCard)
-    {
-        throw IllegalType();
-    }
-    cards.push_back(typedCard);
-    return *this;
-}
-
-template <typename T>
-int Chain<T>::sell()
-{
-    if (cards.empty())
-        return 0;
-
-    T *sampleCard = cards[0];
-    int numCards = cards.size();
-
-    for (int coins = 4; coins > 0; --coins)
-    {
-        if (numCards >= sampleCard->getCardsPerCoin(coins))
-        {
-            return coins;
-        }
-    }
-    return 0;
-}
-
+// Constructor implementation
 template <typename T>
 Chain<T>::Chain(std::istream &in, const CardFactory *factory)
 {
     cards.clear();
+    std::string cardName;
+    int numCards;
+    in >> numCards;
+
+    for (int i = 0; i < numCards; ++i)
+    {
+        std::getline(in, cardName);
+        if (cardName == "END_CHAIN")
+            break;
+
+        try
+        {
+            auto card = factory->getFactory()->createCard(cardName);
+            if (auto *typedCard = dynamic_cast<T *>(card.get()))
+            {
+                cards.push_back(std::unique_ptr<T>(static_cast<T *>(card.release())));
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error loading chain card: " << e.what() << std::endl;
+        }
+    }
 }
 
 #endif // CHAIN_H

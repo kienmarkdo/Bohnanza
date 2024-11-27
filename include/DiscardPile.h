@@ -2,6 +2,7 @@
 #define DISCARD_PILE_H
 
 #include <vector>
+#include <memory>
 #include <iostream>
 #include "Card.h"
 
@@ -9,47 +10,35 @@ class CardFactory;
 
 class DiscardPile
 {
-public:
-    // Default constructor
-    DiscardPile() = default;
+private:
+    std::vector<std::unique_ptr<Card>> cards;
 
-    // Constructor to reconstruct discard pile from file
+public:
+    // Constructors
+    DiscardPile() = default;
     DiscardPile(std::istream &in, const CardFactory *factory);
 
-    // Add card to the pile
-    DiscardPile &operator+=(Card *card);
-
-    // Pick up and remove top card
-    Card *pickUp();
-
-    // View top card without removing
-    Card *top() const;
-
-    // Print all cards in the pile
-    void print(std::ostream &out) const;
-
-    // Stream insertion operator (prints only top card)
-    friend std::ostream &operator<<(std::ostream &out, const DiscardPile &pile);
-
-    // Destructor
-    ~DiscardPile();
-    void deserialize(std::istream &in, const CardFactory *factory);
+    // Move operations
+    DiscardPile(DiscardPile &&other) noexcept = default;
+    DiscardPile &operator=(DiscardPile &&other) noexcept = default;
 
     // Delete copy operations
     DiscardPile(const DiscardPile &) = delete;
     DiscardPile &operator=(const DiscardPile &) = delete;
 
-    // Move operations
-    DiscardPile(DiscardPile &&other) noexcept;
-    DiscardPile &operator=(DiscardPile &&other) noexcept;
-
-    // Additional helper methods
-    bool empty() const { return cards.empty(); }
-    size_t size() const { return cards.size(); }
+    // Member functions
+    DiscardPile &operator+=(std::unique_ptr<Card> card);
+    std::unique_ptr<Card> pickUp();
+    const Card *top() const;
+    bool empty() const;
+    void print(std::ostream &out) const;
     void serialize(std::ostream &out) const;
 
-private:
-    std::vector<Card *> cards;
+    // Destructor
+    ~DiscardPile() = default;
+
+    // Friend operator
+    friend std::ostream &operator<<(std::ostream &out, const DiscardPile &pile);
 };
 
 #endif // DISCARD_PILE_H

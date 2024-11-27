@@ -11,82 +11,44 @@
 class Table
 {
 public:
-    // Constructor with player names
+    // Constructors
     Table(const std::string &player1Name, const std::string &player2Name);
-
-    // Constructor to reconstruct table from file
     Table(std::istream &in, const CardFactory *factory);
 
-    // Check for winner
+    // Game state management
     bool win(std::string &winnerName);
-
-    // Print hand (true for all cards, false for top)
     void printHand(bool all = false) const;
 
-    // Stream insertion operator
-    friend std::ostream &operator<<(std::ostream &out, const Table &table);
-
-    // Game state access methods
+    // Getters with appropriate const overloads
     Player &getPlayer(int playerNum);
     const Player &getPlayer(int playerNum) const;
     Deck &getDeck() { return deck; }
+    const Deck &getDeck() const { return deck; }
     DiscardPile &getDiscardPile() { return discardPile; }
+    const DiscardPile &getDiscardPile() const { return discardPile; }
     TradeArea &getTradeArea() { return tradeArea; }
+    const TradeArea &getTradeArea() const { return tradeArea; }
 
-    // Current player management
+    // Player management
     int getCurrentPlayer() const { return currentPlayer; }
     void nextPlayer() { currentPlayer = (currentPlayer % 2) + 1; }
 
-    // Save game state
+    // Serialization
     void saveGame(std::ostream &out) const;
-    ~Table()
-    {
-        std::cout << "Table destructor start\n";
-        try
-        {
-            std::cout << "Clearing players...\n";
 
-            std::cout << "Clearing player 0...\n";
-            if (players[0])
-            {
-                players[0].reset();
-            }
-            std::cout << "Player 0 cleared\n";
+    // Stream operator
+    friend std::ostream &operator<<(std::ostream &out, const Table &table);
 
-            std::cout << "Clearing player 1...\n";
-            if (players[1])
-            {
-                players[1].reset();
-            }
-            std::cout << "Player 1 cleared\n";
-
-            std::cout << "Clearing deck...\n";
-            deck.clear();
-            std::cout << "Deck cleared\n";
-
-            std::cout << "Clearing discard pile...\n";
-            discardPile = DiscardPile();
-            std::cout << "Discard pile cleared\n";
-
-            std::cout << "Clearing trade area...\n";
-            tradeArea = TradeArea();
-            std::cout << "Trade area cleared\n";
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error in Table destructor: " << e.what() << "\n";
-        }
-        std::cout << "Table destructor end\n";
-    }
+    // Destructor can be defaulted due to smart pointers
+    ~Table() = default;
 
 private:
     std::array<std::unique_ptr<Player>, 2> players;
     Deck deck;
     DiscardPile discardPile;
     TradeArea tradeArea;
-    int currentPlayer = 1; // 1 or 2
+    int currentPlayer = 1;
 
-    // Helper to validate player number
     void validatePlayerNum(int playerNum) const;
 };
 

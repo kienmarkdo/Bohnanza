@@ -4,87 +4,56 @@
 #include <chrono>
 #include <stdexcept>
 
-std::unique_ptr<CardFactory> CardFactory::instance = nullptr;
+std::shared_ptr<CardFactory> CardFactory::instance = nullptr;
 
-// Add constructor implementation
 CardFactory::CardFactory()
 {
     initializeCards();
 }
 
-// Add getFactory implementation
-CardFactory *CardFactory::getFactory()
+std::shared_ptr<CardFactory> CardFactory::getFactory()
 {
     if (!instance)
     {
-        instance = std::unique_ptr<CardFactory>(new CardFactory());
+        instance = std::shared_ptr<CardFactory>(new CardFactory());
     }
-    return instance.get();
+    return instance;
 }
+
 void CardFactory::initializeCards()
 {
     // Initialize all card pools according to the game requirements
-
-    // Blue - 20 cards
-    for (int i = 0; i < 20; ++i)
+    auto createCards = [this](const std::string &type, int count, auto creator)
     {
-        cards["Blue"].push_back(std::unique_ptr<Card>(BeanCreator<Blue>::create()));
-    }
+        cards[type].reserve(count);
+        for (int i = 0; i < count; ++i)
+        {
+            cards[type].push_back(std::unique_ptr<Card>(creator()));
+        }
+    };
 
-    // Chili - 18 cards
-    for (int i = 0; i < 18; ++i)
-    {
-        cards["Chili"].push_back(std::unique_ptr<Card>(BeanCreator<Chili>::create()));
-    }
-
-    // Stink - 16 cards
-    for (int i = 0; i < 16; ++i)
-    {
-        cards["Stink"].push_back(std::unique_ptr<Card>(BeanCreator<Stink>::create()));
-    }
-
-    // Green - 14 cards
-    for (int i = 0; i < 14; ++i)
-    {
-        cards["Green"].push_back(std::unique_ptr<Card>(BeanCreator<Green>::create()));
-    }
-
-    // Soy - 12 cards
-    for (int i = 0; i < 12; ++i)
-    {
-        cards["Soy"].push_back(std::unique_ptr<Card>(BeanCreator<Soy>::create()));
-    }
-
-    // Black - 10 cards
-    for (int i = 0; i < 10; ++i)
-    {
-        cards["Black"].push_back(std::unique_ptr<Card>(BeanCreator<Black>::create()));
-    }
-
-    // Red - 8 cards
-    for (int i = 0; i < 8; ++i)
-    {
-        cards["Red"].push_back(std::unique_ptr<Card>(BeanCreator<Red>::create()));
-    }
-
-    // Garden - 6 cards
-    for (int i = 0; i < 6; ++i)
-    {
-        cards["Garden"].push_back(std::unique_ptr<Card>(BeanCreator<Garden>::create()));
-    }
+    createCards("Blue", 20, BeanCreator<Blue>::create);
+    createCards("Chili", 18, BeanCreator<Chili>::create);
+    createCards("Stink", 16, BeanCreator<Stink>::create);
+    createCards("Green", 14, BeanCreator<Green>::create);
+    createCards("Soy", 12, BeanCreator<Soy>::create);
+    createCards("Black", 10, BeanCreator<Black>::create);
+    createCards("Red", 8, BeanCreator<Red>::create);
+    createCards("Garden", 6, BeanCreator<Garden>::create);
 }
 
-Deck CardFactory::getDeck()
+std::unique_ptr<Deck> CardFactory::getDeck()
 {
-    std::vector<Card *> allCards;
+    auto deck = std::make_unique<Deck>();
+    std::vector<std::unique_ptr<Card>> allCards;
     allCards.reserve(104); // Total number of cards in the game
 
-    // Add raw pointers from each card pool
+    // Move cards from each pool to temporary vector
     for (const auto &[type, cardVec] : cards)
     {
         for (const auto &card : cardVec)
         {
-            allCards.push_back(card.get());
+            allCards.push_back(std::unique_ptr<Card>(card->clone()));
         }
     }
 
@@ -92,33 +61,43 @@ Deck CardFactory::getDeck()
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(allCards.begin(), allCards.end(), std::default_random_engine(seed));
 
-    // Create and return a new deck with the shuffled cards
-    Deck deck;
-    deck.insert(deck.begin(), allCards.begin(), allCards.end());
+    // Move cards to the deck
+    for (auto &card : allCards)
+    {
+        deck->addCard(std::move(card));
+    }
 
     return deck;
 }
 
-Card *CardFactory::createCard(const std::string &cardName)
+std::unique_ptr<Card> CardFactory::createCard(const std::string &cardName)
 {
-    if (cards.find(cardName) != cards.end() && !cards[cardName].empty())
+    auto createSpecificCard = [](const std::string &name) -> std::unique_ptr<Card>
     {
-        if (cardName == "Blue")
-            return BeanCreator<Blue>::create();
-        if (cardName == "Chili")
-            return BeanCreator<Chili>::create();
-        if (cardName == "Stink")
-            return BeanCreator<Stink>::create();
-        if (cardName == "Green")
-            return BeanCreator<Green>::create();
-        if (cardName == "Soy")
-            return BeanCreator<Soy>::create();
-        if (cardName == "Black")
-            return BeanCreator<Black>::create();
-        if (cardName == "Red")
-            return BeanCreator<Red>::create();
-        if (cardName == "Garden")
-            return BeanCreator<Garden>::create();
+        if (name == "Blue")
+            return std::unique_ptr<Card>(BeanCreator<Blue>::create());
+        if (name == "Chili")
+            return std::unique_ptr<Card>(BeanCreator<Chili>::create());
+        if (name == "Stink")
+            return std::unique_ptr<Card>(BeanCreator<Stink>::create());
+        if (name == "Green")
+            return std::unique_ptr<Card>(BeanCreator<Green>::create());
+        if (name == "Soy")
+            return std::unique_ptr<Card>(BeanCreator<Soy>::create());
+        if (name == "Black")
+            return std::unique_ptr<Card>(BeanCreator<Black>::create());
+        if (name == "Red")
+            return std::unique_ptr<Card>(BeanCreator<Red>::create());
+        if (name == "Garden")
+            return std::unique_ptr<Card>(BeanCreator<Garden>::create());
+        return nullptr;
+    };
+
+    if (cards.find(cardName) != cards.end())
+    {
+        auto card = createSpecificCard(cardName);
+        if (card)
+            return card;
     }
 
     throw std::runtime_error("Unable to create card: " + cardName);

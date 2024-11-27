@@ -57,6 +57,8 @@
     "string_view": "cpp",
     "tuple": "cpp",
     "unordered_map": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "charconv": "cpp",
+    "forward_list": "cpp"
   }
 }
