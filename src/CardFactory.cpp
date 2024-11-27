@@ -48,9 +48,10 @@ std::unique_ptr<Deck> CardFactory::getDeck()
     std::vector<std::unique_ptr<Card>> allCards;
     allCards.reserve(104); // Total number of cards in the game
 
-    // Move cards from each pool to temporary vector
-    for (const auto &[type, cardVec] : cards)
+    // Modified this part to use iterator instead of structured binding
+    for (const auto &pair : cards)
     {
+        const auto &cardVec = pair.second;
         for (const auto &card : cardVec)
         {
             allCards.push_back(std::unique_ptr<Card>(card->clone()));

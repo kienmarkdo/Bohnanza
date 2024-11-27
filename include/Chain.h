@@ -8,7 +8,7 @@
 #include "Card.h"
 #include "CardFactory.h"
 class CardFactory;
-
+#include <type_traits>
 class IllegalType : public std::exception
 {
 public:
@@ -85,21 +85,20 @@ public:
             return cards[0]->getName();
         }
 
-        if constexpr (std::is_same_v<T, Blue>)
+        // Changed conditions to use the proper syntax
+        if constexpr (std::is_same_v<T, Blue>())
             return "Blue";
-        if constexpr (std::is_same_v<T, Chili>)
-            return "Chili";
-        if constexpr (std::is_same_v<T, Stink>)
+        if constexpr (std::is_same_v<T, Chili>())
             return "Stink";
-        if constexpr (std::is_same_v<T, Green>)
+        if constexpr (std::is_same_v<T, Green>())
             return "Green";
-        if constexpr (std::is_same_v<T, Soy>)
+        if constexpr (std::is_same_v<T, Soy>())
             return "Soy";
-        if constexpr (std::is_same_v<T, Black>)
+        if constexpr (std::is_same_v<T, Black>())
             return "Black";
-        if constexpr (std::is_same_v<T, Red>)
+        if constexpr (std::is_same_v<T, Red>())
             return "Red";
-        if constexpr (std::is_same_v<T, Garden>)
+        if constexpr (std::is_same_v<T, Garden>())
             return "Garden";
         return "Unknown";
     }
