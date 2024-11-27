@@ -1,6 +1,7 @@
 #include "Player.h"
 #include <stdexcept>
 #include <sstream>
+#include <algorithm>
 
 Player::Player(const std::string &playerName)
     : name(playerName)

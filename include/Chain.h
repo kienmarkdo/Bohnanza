@@ -85,22 +85,23 @@ public:
             return cards[0]->getName();
         }
 
-        // Changed conditions to use the proper syntax
-        if constexpr (std::is_same_v<T, Blue>())
+        if (std::is_same<T, Blue>::value) {
             return "Blue";
-        if constexpr (std::is_same_v<T, Chili>())
-            return "Stink";
-        if constexpr (std::is_same_v<T, Green>())
+        } else if (std::is_same<T, Chili>::value) {
+            return "Chili";
+        } else if (std::is_same<T, Green>::value) {
             return "Green";
-        if constexpr (std::is_same_v<T, Soy>())
+        } else if (std::is_same<T, Soy>::value) {
             return "Soy";
-        if constexpr (std::is_same_v<T, Black>())
+        } else if (std::is_same<T, Black>::value) {
             return "Black";
-        if constexpr (std::is_same_v<T, Red>())
+        } else if (std::is_same<T, Red>::value) {
             return "Red";
-        if constexpr (std::is_same_v<T, Garden>())
+        } else if (std::is_same<T, Garden>::value) {
             return "Garden";
-        return "Unknown";
+        } else {
+            return "Unknown";
+        }
     }
 
     // Display methods
