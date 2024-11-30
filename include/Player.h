@@ -40,7 +40,7 @@ public:
     std::unique_ptr<Card> getCardFromHand(int index) { return hand[index]; }
     const Card *getTopCardFromHand() const { return hand.top(); }
     bool isHandEmpty() const { return hand.empty(); }
-
+    void addToFrontOfHand(std::unique_ptr<Card> card);
     // Coin operations
     Player &operator+=(int additionalCoins);
 

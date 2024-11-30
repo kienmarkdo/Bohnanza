@@ -97,7 +97,7 @@ std::ostream &operator<<(std::ostream &out, const Table &table)
 
     // Print discard pile with header
     out << "=== Discard Pile ===" << "\n";
-    out << table.getDiscardPile() << "\n";
+    table.getDiscardPile().print(out);
 
     return out;
 }

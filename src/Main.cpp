@@ -140,7 +140,7 @@ int main()
             if (drawnCard)
             {
                 std::cout << "\nDrawn card: ";
-                drawnCard->print(std::cout);
+                std::cout << drawnCard->getName();
                 std::cout << "\n";
                 currentPlayer.addToHand(std::move(drawnCard));
             }
@@ -217,13 +217,58 @@ int main()
         {
             auto playedCard = currentPlayer.playFromHand();
             std::cout << "\nPlayed card: ";
-            playedCard->print(std::cout);
+            std::cout << playedCard->getName();
             std::cout << "\n";
-            // Add chain logic here
+            try
+            {
+                if (auto *stinkCard = dynamic_cast<Stink *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Stink>(std::move(playedCard));
+                }
+                else if (auto *blueCard = dynamic_cast<Blue *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Blue>(std::move(playedCard));
+                }
+                else if (auto *chiliCard = dynamic_cast<Chili *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Chili>(std::move(playedCard));
+                }
+                else if (auto *greenCard = dynamic_cast<Green *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Green>(std::move(playedCard));
+                }
+                else if (auto *soyCard = dynamic_cast<Soy *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Soy>(std::move(playedCard));
+                }
+                else if (auto *blackCard = dynamic_cast<Black *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Black>(std::move(playedCard));
+                }
+                else if (auto *redCard = dynamic_cast<Red *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Red>(std::move(playedCard));
+                }
+                else if (auto *gardenCard = dynamic_cast<Garden *>(playedCard.get()))
+                {
+                    currentPlayer.addCardToChain<Garden>(std::move(playedCard));
+                }
+                else
+                {
+                    throw std::runtime_error("Unknown card type");
+                }
+                std::cout << "Card chained.\n";
+            }
+            catch (const std::exception &e)
+            {
+                currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
+                // std::cout << "Failed to create chain: " << e.what() << "\n";
+                return;
+            }
         }
         catch (const std::exception &e)
         {
-            std::cout << "Error playing card: " << e.what() << "\n";
+            std::cout << "Error: " << e.what() << "\n";
         }
 
         // Optional second card
@@ -233,13 +278,58 @@ int main()
             {
                 auto playedCard = currentPlayer.playFromHand();
                 std::cout << "Played card: ";
-                playedCard->print(std::cout);
+                std::cout << playedCard->getName();
                 std::cout << "\n";
-                // Add chain logic here
+                try
+                {
+                    if (auto *stinkCard = dynamic_cast<Stink *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Stink>(std::move(playedCard));
+                    }
+                    else if (auto *blueCard = dynamic_cast<Blue *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Blue>(std::move(playedCard));
+                    }
+                    else if (auto *chiliCard = dynamic_cast<Chili *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Chili>(std::move(playedCard));
+                    }
+                    else if (auto *greenCard = dynamic_cast<Green *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Green>(std::move(playedCard));
+                    }
+                    else if (auto *soyCard = dynamic_cast<Soy *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Soy>(std::move(playedCard));
+                    }
+                    else if (auto *blackCard = dynamic_cast<Black *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Black>(std::move(playedCard));
+                    }
+                    else if (auto *redCard = dynamic_cast<Red *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Red>(std::move(playedCard));
+                    }
+                    else if (auto *gardenCard = dynamic_cast<Garden *>(playedCard.get()))
+                    {
+                        currentPlayer.addCardToChain<Garden>(std::move(playedCard));
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unknown card type");
+                    }
+                    std::cout << "Card chained.\n";
+                }
+                catch (const std::exception &e)
+                {
+                    currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
+                    // std::cout << "Failed to create chain: " << e.what() << "\n";
+                    return;
+                }
             }
             catch (const std::exception &e)
             {
-                std::cout << "Error playing card: " << e.what() << "\n";
+                std::cout << "Error: " << e.what() << "\n";
             }
         }
 
@@ -256,7 +346,9 @@ int main()
             {
                 auto discardedCard = currentPlayer.getCardFromHand(index);
                 gameTable->getDiscardPile() += std::move(discardedCard);
-                std::cout << "Card discarded.\n";
+                std::cout << gameTable->getDiscardPile();
+                std::cout
+                    << "Card discarded.\n";
             }
             catch (const std::exception &e)
             {
@@ -265,10 +357,14 @@ int main()
         }
 
         // Draw trade cards
+        std::cout << ">>> " << currentPlayer.getName() << " draws three cards from deck and places in trade area." << std::endl
+                  << std::endl;
+
         for (int i = 0; i < 3 && !gameTable->getDeck().empty(); ++i)
         {
             gameTable->getTradeArea() += std::move(gameTable->getDeck().draw());
         }
+        std::cout << gameTable->getTradeArea();
 
         // Process matching cards from discard pile
         while (!gameTable->getDiscardPile().empty() &&

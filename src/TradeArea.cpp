@@ -104,7 +104,7 @@ std::ostream &operator<<(std::ostream &out, const TradeArea &tradeArea)
     {
         for (const auto &card : tradeArea.cards)
         {
-            card->print(out);
+            out << card->getName();
             out << " ";
         }
     }

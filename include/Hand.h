@@ -30,9 +30,13 @@ public:
     std::unique_ptr<Card> play();
     const Card *top() const;
     std::unique_ptr<Card> operator[](int index);
+    void addToFront(std::unique_ptr<Card> card);
 
     // Utility methods
-    bool empty() const { return cards.empty(); }
+    bool empty() const
+    {
+        return cards.empty();
+    }
     size_t size() const { return cards.size(); }
     void serialize(std::ostream &out) const;
 

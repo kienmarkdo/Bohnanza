@@ -70,7 +70,7 @@ void DiscardPile::print(std::ostream &out) const
     out << "Discard Pile: ";
     for (const auto &card : cards)
     {
-        card->print(out);
+        out << card->getName();
         out << " ";
     }
     out << "\n";
@@ -96,7 +96,7 @@ std::ostream &operator<<(std::ostream &out, const DiscardPile &pile)
     }
     else if (pile.top())
     {
-        pile.top()->print(out);
+        out << pile.top()->getName();
     }
     return out;
 }

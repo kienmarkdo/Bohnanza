@@ -33,12 +33,10 @@ public:
 
     ~CardFactory()
     {
-        std::cout << "CardFactory destructor start\n";
         try
         {
             cards.clear();
-            std::cout << "All cards cleared\n";
-        }
+                }
         catch (const std::exception &e)
         {
             std::cerr << "Error in CardFactory destructor: " << e.what() << "\n";

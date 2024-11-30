@@ -55,6 +55,11 @@ std::unique_ptr<Card> Hand::play()
     return topCard;
 }
 
+void Hand::addToFront(std::unique_ptr<Card> card)
+{
+    cards.push_front(std::move(card));
+}
+
 const Card *Hand::top() const
 {
     if (cards.empty())

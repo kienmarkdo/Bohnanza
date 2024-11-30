@@ -142,3 +142,12 @@ std::ostream &operator<<(std::ostream &out, const Player &player)
 
     return out;
 }
+
+void Player::addToFrontOfHand(std::unique_ptr<Card> card)
+{
+    if (!card)
+    {
+        throw std::runtime_error("Cannot add null card to hand");
+    }
+    hand.addToFront(std::move(card)); // Assuming 'hand' is a deque
+}

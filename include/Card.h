@@ -27,15 +27,7 @@ public:
 
     virtual ~Card()
     {
-        try
-        {
-            std::cout << "Card destructor called\n";
         }
-        catch (...)
-        {
-            std::cerr << "Error in Card destructor\n";
-        }
-    }
 
 protected:
     Card() = default;
