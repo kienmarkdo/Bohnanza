@@ -263,7 +263,6 @@ int main()
             {
                 currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
                 // std::cout << "Failed to create chain: " << e.what() << "\n";
-                return;
             }
         }
         catch (const std::exception &e)
@@ -324,7 +323,6 @@ int main()
                 {
                     currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
                     // std::cout << "Failed to create chain: " << e.what() << "\n";
-                    return;
                 }
             }
             catch (const std::exception &e)

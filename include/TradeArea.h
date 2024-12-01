@@ -31,7 +31,7 @@ public:
     bool legal(const Card *card) const;
     std::unique_ptr<Card> trade(const std::string &bean);
     bool contains(const std::string &beanName) const;
-    void removeIllegalCards();
+    // void removeIllegalCards();
     // Additional utility methods
     bool empty() const { return cards.empty(); }
     size_t numCards() const { return cards.size(); }
