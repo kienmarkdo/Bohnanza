@@ -45,6 +45,22 @@ public:
     Player &operator+=(int additionalCoins);
 
     // Chain management
+    // New method to handle harvesting
+    template <typename T>
+    int harvestChain()
+    {
+        for (size_t i = 0; i < chains.size(); i++)
+        {
+            if (auto *chain = dynamic_cast<Chain<T> *>(chains[i].get()))
+            {
+                int harvestedCoins = chain->sell();
+                *this += harvestedCoins;
+                chains[i] = nullptr; // Reset the chain
+                return harvestedCoins;
+            }
+        }
+        return 0;
+    }
 
     template <typename T>
     Chain<T> *findChainOfType()
@@ -61,18 +77,50 @@ public:
         }
         return nullptr;
     }
+    template <typename T>
+    bool shouldHarvestChain()
+    {
+        if (auto chain = findChainOfType<T>())
+        {
+            if (const Card *firstCard = chain->getFirstCard())
+            {
+                if (const T *typedCard = dynamic_cast<const T *>(firstCard))
+                {
+                    // Get maximum cards per coin value for this type
+                    int maxCards = 0;
+                    for (int coins = 4; coins > 0; --coins)
+                    {
+                        int cardsNeeded = typedCard->getCardsPerCoin(coins);
+                        if (cardsNeeded > 0)
+                        {
+                            maxCards = cardsNeeded;
+                            break;
+                        }
+                    }
+                    return (maxCards > 0 && chain->size() >= maxCards);
+                }
+            }
+        }
+        return false;
+    }
 
     template <typename T>
     Chain<T> &addCardToChain(std::unique_ptr<Card> card)
     {
-        // First try to find an existing chain of this type
+        // Check if current chain should be harvested
+        if (shouldHarvestChain<T>())
+        {
+            harvestChain<T>();
+        }
+
+        // Try to find existing chain or create new one
         if (auto existingChain = findChainOfType<T>())
         {
             *existingChain += std::move(card);
             return *existingChain;
         }
 
-        // No existing chain found, look for first empty slot
+        // Look for empty slot
         for (auto &chain : chains)
         {
             if (!chain)

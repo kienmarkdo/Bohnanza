@@ -331,6 +331,69 @@ int main()
             }
         }
 
+        if (getUserChoice("\nWould you like to harvest any chains?"))
+        {
+            std::cout << "Available chains to harvest:\n";
+            for (int i = 0; i < currentPlayer.getNumChains(); i++)
+            {
+                try
+                {
+                    auto &chain = currentPlayer[i];
+                    if (chain.size() > 0)
+                    {
+                        std::cout << i + 1 << ". ";
+                        chain.print(std::cout);
+                        std::cout << " (Value: " << chain.sell() << " coins)\n";
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    continue;
+                }
+            }
+
+            std::cout << "Enter chain number to harvest (1-" << currentPlayer.getNumChains()
+                      << ") or 0 to cancel: ";
+            int chainNum;
+            std::cin >> chainNum;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            if (chainNum > 0 && chainNum <= currentPlayer.getNumChains())
+            {
+                try
+                {
+                    auto &chain = currentPlayer[chainNum - 1];
+                    std::string chainType = chain.getType();
+                    int coins = 0;
+
+                    if (chainType == "Blue")
+                        coins = currentPlayer.harvestChain<Blue>();
+                    else if (chainType == "Chili")
+                        coins = currentPlayer.harvestChain<Chili>();
+                    else if (chainType == "Stink")
+                        coins = currentPlayer.harvestChain<Stink>();
+                    else if (chainType == "Green")
+                        coins = currentPlayer.harvestChain<Green>();
+                    else if (chainType == "Soy")
+                        coins = currentPlayer.harvestChain<Soy>();
+                    else if (chainType == "Black")
+                        coins = currentPlayer.harvestChain<Black>();
+                    else if (chainType == "Red")
+                        coins = currentPlayer.harvestChain<Red>();
+                    else if (chainType == "Garden")
+                        coins = currentPlayer.harvestChain<Garden>();
+
+                    if (coins > 0)
+                    {
+                        std::cout << "Harvested " << coins << " coins!\n";
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    std::cout << "Error harvesting chain: " << e.what() << "\n";
+                }
+            }
+        }
         // Discard phase
         if (getUserChoice("\nWould you like to discard a card?"))
         {
