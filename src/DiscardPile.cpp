@@ -68,10 +68,13 @@ bool DiscardPile::empty() const
 void DiscardPile::print(std::ostream &out) const
 {
     out << "Discard Pile: ";
-    for (const auto &card : cards)
+    if (empty())
     {
-        out << card->getName();
-        out << " ";
+        out << "(empty)";
+    }
+    else if (const Card *topCard = top())
+    {
+        out << topCard->getName();
     }
     out << "\n";
 }
@@ -94,9 +97,20 @@ std::ostream &operator<<(std::ostream &out, const DiscardPile &pile)
     {
         out << "(empty)";
     }
-    else if (pile.top())
+    else
     {
-        out << pile.top()->getName();
+        try
+        {
+            const Card *topCard = pile.top();
+            if (topCard)
+            {
+                out << topCard->getName();
+            }
+        }
+        catch (const std::runtime_error &)
+        {
+            out << "(empty)";
+        }
     }
     return out;
 }

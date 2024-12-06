@@ -145,7 +145,25 @@ int main()
                 currentPlayer.addToHand(std::move(drawnCard));
             }
         }
-
+        if (currentPlayer.getNumCoins() >= 3 && currentPlayer.getMaxNumChains() == 2)
+        {
+            if (getUserChoice("Would you like to buy a third chain for 3 coins?"))
+            {
+                try
+                {
+                    currentPlayer.buyThirdChain();
+                    std::cout << "Third chain purchased successfully!\n";
+                }
+                catch (const NotEnoughCoins &e)
+                {
+                    std::cout << "Error: Not enough coins to buy third chain.\n";
+                }
+                catch (const std::runtime_error &e)
+                {
+                    std::cout << "Error: " << e.what() << "\n";
+                }
+            }
+        }
         // Trade area phase
         if (!gameTable->getTradeArea().empty())
         {
