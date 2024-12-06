@@ -1,4 +1,19 @@
 #include "Deck.h"
+#include "CardFactory.h"
+#include "Card.h"
+#include <string>
 
-// Currently, no additional logic needed here since we implemented everything inline.
-// If needed, add Deck-specific non-inline methods here.
+std::ostream& operator<<(std::ostream& out, const Deck& d) {
+    out << d.size();
+    for (auto c : d.cards) out << " " << c->getName();
+    out << "\n";
+    return out;
+}
+
+Deck::Deck(std::istream& in, CardFactory* factory) {
+    int count; in >> count;
+    for (int i=0; i<count; i++) {
+        std::string name; in >> name;
+        cards.push_back(factory->createCard(name));
+    }
+}

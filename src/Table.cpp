@@ -1,22 +1,17 @@
 #include "Table.h"
+#include "CardFactory.h"
 
-bool Table::win() const {
-    // Game over condition: if deck is empty. Or if some other condition is specified, adjust.
-    return deck.size() == 0;
+Table::Table(const std::string& p1Name, const std::string& p2Name, Deck&& initialDeck)
+    : player1(p1Name), player2(p2Name), deck(std::move(initialDeck))
+{
+}
+
+Table::Table(std::istream& in, CardFactory* factory)
+    : player1(in, factory), player2(in, factory), deck(in, factory), discardPile(in, factory), tradeArea(in, factory)
+{
 }
 
 std::ostream& operator<<(std::ostream& out, const Table& table) {
-    // Print players
-    out << "Player 1: " << table.player1 << std::endl;
-    out << "Player 2: " << table.player2 << std::endl;
-
-    // Print discard pile
-    out << "Discard Pile: " << table.discardPile << std::endl;
-
-    // Print trade area
-    out << "Trade Area: " << table.tradeArea << std::endl;
-
-    // Print deck size
-    out << "Deck size: " << table.deck.size() << " cards remaining." << std::endl;
+    out << table.player1 << "\n" << table.player2 << "\n" << table.deck << table.discardPile << table.tradeArea;
     return out;
 }

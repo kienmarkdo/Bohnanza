@@ -3,27 +3,24 @@
 
 #include <list>
 #include <iostream>
+#include <string>
 #include "Card.h"
+class CardFactory;
 
 class TradeArea {
 private:
     std::list<Card*> cards;
 public:
     TradeArea() = default;
-
-    // Add a card to the TradeArea
-    TradeArea& operator+=(Card* card);
-
-    // Check if card of this bean type is in the trade area
-    bool legal(Card* card) const;
-
-    // Remove and return a card of the specified bean name if present
-    Card* trade(const std::string& beanName);
-
-    // Number of cards in TradeArea
-    int numCards() const { return (int)cards.size(); }
-
+    TradeArea(std::istream& in, CardFactory* factory);
     friend std::ostream& operator<<(std::ostream& out, const TradeArea& ta);
+    TradeArea& operator+=(Card* c) { cards.push_back(c); return *this; }
+    bool legal(Card* c) const {
+        if (cards.empty()) return true;
+        std::string n = c->getName();
+        for (auto x: cards) if (x->getName()==n) return true;
+        return false;
+    }
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <limits>
@@ -22,6 +23,7 @@ static void printCommands() {
               << "  discard    - Discard top card\n"
               << "  buychain   - Buy third chain\n"
               << "  sell       - Sell a chain\n"
+              << "  save       - Save game\n"
               << "  end        - End turn\n\n";
 }
 
@@ -76,7 +78,6 @@ static void sellChain(Player& player, Table& table) {
     std::cout << player.getName() << " sold " << needed << " card(s) for " << coins << " coin(s).\n\n";
 }
 
-
 static void playTopCard(Player& player, Table& table) {
     Card* top = player.topCard();
     if (!top) {
@@ -124,31 +125,60 @@ static void attemptBuyThirdChain(Player& player) {
     }
 }
 
+static void saveGame(const Table& table) {
+    std::ofstream out("savefile.txt");
+    if (!out) {
+        std::cout << "Error saving.\n";
+        return;
+    }
+    out << table;
+    out.close();
+    std::cout << "Game saved.\n";
+}
+
+static Table loadGame(CardFactory* factory) {
+    std::ifstream in("savefile.txt");
+    if (!in) {
+        std::cout << "No save file.\n";
+        return Table("DefaultP1", "DefaultP2", factory->getDeck());
+    }
+    Table t(in, factory);
+    return t;
+}
+
 int main() {
     try {
-        std::string p1Name, p2Name;
-        std::cout << "Enter name for Player 1: ";
-        std::cin >> p1Name;
-        std::cout << "Enter name for Player 2: ";
-        std::cin >> p2Name;
-
         CardFactory* factory = CardFactory::getFactory();
-        Deck deck = factory->getDeck();
+        std::cout << "Load previous game (y/n)? ";
+        char choice; std::cin >> choice;
+        Table table("", "", Deck());
+        Player *p1, *p2;
 
-        Table table(p1Name, p2Name, std::move(deck));
-        Player& p1 = table.getPlayer1();
-        Player& p2 = table.getPlayer2();
-
-        for (int i = 0; i < 5; ++i) {
-            p1 += table.getDeck().draw();
-            p2 += table.getDeck().draw();
+        if (choice == 'y') {
+            table = loadGame(factory);
+            p1 = &table.getPlayer1();
+            p2 = &table.getPlayer2();
+        } else {
+            std::string p1Name, p2Name;
+            std::cout << "Enter name for Player 1: ";
+            std::cin >> p1Name;
+            std::cout << "Enter name for Player 2: ";
+            std::cin >> p2Name;
+            Deck deck = factory->getDeck();
+            table = Table(p1Name, p2Name, std::move(deck));
+            p1 = &table.getPlayer1();
+            p2 = &table.getPlayer2();
+            for (int i = 0; i < 5; ++i) {
+                *p1 += table.getDeck().draw();
+                *p2 += table.getDeck().draw();
+            }
         }
 
-        std::cout << "\nWelcome!\nPlayers: " << p1.getName() << " and " << p2.getName() << ".\n";
+        std::cout << "\nWelcome!\nPlayers: " << p1->getName() << " and " << p2->getName() << ".\n";
 
         bool gameOver = false;
-        Player* currentPlayer = &p1;
-        Player* otherPlayer = &p2;
+        Player* currentPlayer = p1;
+        Player* otherPlayer = p2;
         int turnCount = 1;
 
         while (!gameOver) {
@@ -158,7 +188,6 @@ int main() {
             }
 
             std::cout << "\n=== Turn " << turnCount << " ===\n" << currentPlayer->getName() << "'s turn.\n\n";
-
             if (table.getDeck().size() > 0) {
                 Card* drawn = table.getDeck().draw();
                 if (drawn) {
@@ -220,6 +249,11 @@ int main() {
                     sellChain(*currentPlayer, table);
                     pressEnterToContinue();
                     actionTaken = true;
+                } else if (command == "save") {
+                    saveGame(table);
+                    std::cout << "Quit after saving (y/n)? ";
+                    char q; std::cin >> q;
+                    if (q == 'y') return 0;
                 } else if (command == "end") {
                     endTurn = true;
                     std::cout << "Ending " << currentPlayer->getName() << "'s turn.\n\n";
@@ -246,11 +280,10 @@ int main() {
         }
 
         std::cout << "\nGame Over!\n" << table << "\n";
-        std::cout << p1.getName() << " has " << p1.getNumCoins() << " coins.\n";
-        std::cout << p2.getName() << " has " << p2.getNumCoins() << " coins.\n";
-
-        if (p1.getNumCoins() > p2.getNumCoins()) std::cout << p1.getName() << " wins!\n";
-        else if (p2.getNumCoins() > p1.getNumCoins()) std::cout << p2.getName() << " wins!\n";
+        std::cout << p1->getName() << " has " << p1->getNumCoins() << " coins.\n";
+        std::cout << p2->getName() << " has " << p2->getNumCoins() << " coins.\n";
+        if (p1->getNumCoins() > p2->getNumCoins()) std::cout << p1->getName() << " wins!\n";
+        else if (p2->getNumCoins() > p1->getNumCoins()) std::cout << p2->getName() << " wins!\n";
         else std::cout << "It's a tie!\n";
 
     } catch (const std::exception& e) {

@@ -2,29 +2,21 @@
 #define CARDFACTORY_H
 
 #include <vector>
-#include <random>
+#include <string>
 #include "Card.h"
 #include "Deck.h"
 
 class CardFactory {
 private:
-    std::vector<Card*> cards; 
-    static CardFactory* factoryInstance;
-
-    // Private constructor: builds all cards in standard distribution
+    std::vector<Card*> cards;
+    static CardFactory* instance;
     CardFactory();
-
 public:
-    // No copying allowed for singleton
     CardFactory(const CardFactory&) = delete;
     CardFactory& operator=(const CardFactory&) = delete;
-
-    // Get the singleton instance
     static CardFactory* getFactory();
-
-    // Returns a Deck containing all cards in a random order
     Deck getDeck();
-
+    Card* createCard(const std::string& name);
     ~CardFactory();
 };
 

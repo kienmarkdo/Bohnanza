@@ -11,56 +11,50 @@ private:
     std::vector<Card*> chain;
 public:
     Chain() = default;
-    Chain_Base& operator+=(Card* card) override {
-        T* casted = dynamic_cast<T*>(card);
+    Chain_Base& operator+=(Card* c) override {
+        T* casted = dynamic_cast<T*>(c);
         if (!casted) throw std::invalid_argument("IllegalType");
-        chain.push_back(card);
+        chain.push_back(c);
         return *this;
     }
     int sell() const override {
         if (chain.empty()) return 0;
-        const Card* c = chain.front();
-        int total = (int)chain.size();
-        for (int coins = 4; coins >= 1; --coins) {
-            try {
-                int needed = c->getCardsPerCoin(coins);
-                if (total >= needed) return coins;
-            } catch (...) {}
+        const Card* ex=chain.front();
+        int total=(int)chain.size();
+        for (int coins=4; coins>=1; coins--) {
+            int need=ex->getCardsPerCoin(coins);
+            if (total>=need) return coins;
         }
         return 0;
     }
     std::string getBeanName() const override {
         if (chain.empty()) {
-            T tempCard;
-            return tempCard.getName();
-        } else {
-            return chain.front()->getName();
+            T temp;
+            return temp.getName();
         }
+        return chain.front()->getName();
     }
     void print(std::ostream& out) const override {
         if (chain.empty()) {
-            T tempCard;
-            out << tempCard.getName() << " ";
+            T temp;
+            out << temp.getName() << " ";
         } else {
             out << chain.front()->getName() << " ";
         }
         for (auto c : chain) out << *c << " ";
     }
-    void clear() override {
-        chain.clear();
-    }
+    void clear() override { chain.clear(); }
     void moveCardsToDiscardPile(DiscardPile& dp) override {
         for (auto c : chain) dp += c;
         chain.clear();
     }
-    int size() const override {
-        return (int)chain.size();
-    }
+    int size() const override { return (int)chain.size(); }
     Card* frontCard() const override {
-        return chain.empty() ? nullptr : chain.front();
+        if (chain.empty()) return nullptr;
+        return chain.front();
     }
     void removeFrontCards(int n, DiscardPile& dp) override {
-        for (int i = 0; i < n && !chain.empty(); ++i) {
+        for (int i=0; i<n && !chain.empty(); i++) {
             dp += chain.front();
             chain.erase(chain.begin());
         }

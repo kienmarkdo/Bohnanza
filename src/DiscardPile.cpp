@@ -1,26 +1,19 @@
 #include "DiscardPile.h"
-
-DiscardPile& DiscardPile::operator+=(Card* card) {
-    pile.push_back(card);
-    return *this;
-}
-
-Card* DiscardPile::pickUp() {
-    if (pile.empty()) return nullptr;
-    Card* topCard = pile.back();
-    pile.pop_back();
-    return topCard;
-}
-
-Card* DiscardPile::top() const {
-    if (pile.empty()) return nullptr;
-    return pile.back();
-}
+#include "CardFactory.h"
+#include "Card.h"
+#include <string>
 
 std::ostream& operator<<(std::ostream& out, const DiscardPile& dp) {
-    // print top to bottom: top is at the back
-    for (auto it = dp.pile.rbegin(); it != dp.pile.rend(); ++it) {
-        out << **it << " ";
-    }
+    out << dp.pile.size();
+    for (auto c: dp.pile) out << " " << c->getName();
+    out << "\n";
     return out;
+}
+
+DiscardPile::DiscardPile(std::istream& in, CardFactory* factory) {
+    int count; in >> count;
+    for (int i=0; i<count; i++) {
+        std::string name; in >> name;
+        pile.push_back(factory->createCard(name));
+    }
 }
