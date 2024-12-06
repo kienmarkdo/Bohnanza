@@ -12,10 +12,14 @@ bool Table::win(const Player& player) const {
 
 // Prints the table state
 void Table::print(std::ostream& out) const {
-    out << "Player 1: " << player1 << std::endl;
-    out << "Player 2: " << player2 << std::endl;
-    out << "Trade Area: " << tradeArea << std::endl;
-    out << "Discard Pile: " << discardPile << std::endl;
+    out << "Current Table State:" << "\n";
+    out << "Player 1: " << player1 << "\n";
+    out << "Player 2: " << player2 << "\n";
+    out << "Trade Area: " << tradeArea << "\n";
+    out << "Discard Pile: ";
+    discardPile.print(out);
+    out << "\n";
+    out << "========================" << std::endl; // Add separator for readability
 }
 
 // Add a card to the trade area
@@ -34,4 +38,24 @@ TradeArea& Table::getTradeArea() {
 
 Deck& Table::getDeck() {
     return deck;
+}
+
+// Stream insertion operator for saving the game state
+std::ostream& operator<<(std::ostream& out, const Table& table) {
+    out << table.player1 << std::endl;
+    out << table.player2 << std::endl;
+    out << table.deck << std::endl;
+    out << table.discardPile << std::endl;
+    out << table.tradeArea << std::endl;
+    return out;
+}
+
+// Stream extraction operator for loading the game state
+std::istream& operator>>(std::istream& in, Table& table) {
+    in >> table.player1;
+    in >> table.player2;
+    in >> table.deck;
+    in >> table.discardPile;
+    in >> table.tradeArea;
+    return in;
 }

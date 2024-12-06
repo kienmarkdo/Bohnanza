@@ -11,12 +11,16 @@ class Chain {
 public:
     Chain() = default;
     Chain(std::istream& in, const CardFactory* factory);
+    Chain(Card* card);
     Chain& operator+=(Card* card);
     int sell() const;
     friend std::ostream& operator<<(std::ostream& out, const Chain<T>& chain) {
         chain.print(out);
         return out;
     }
+
+    friend std::istream& operator>>(std::istream& in, Chain<Card*>& chain);
+    Chain<T>& operator+=(Card* card);
 
 private:
     std::vector<Card*> cards;

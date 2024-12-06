@@ -37,3 +37,14 @@ std::ostream& operator<<(std::ostream& out, const DiscardPile& discardPile) {
     discardPile.print(out);
     return out;
 }
+
+std::istream& operator>>(std::istream& in, DiscardPile& discardPile) {
+    std::string cardName;
+    while (in >> cardName) {
+        Card* card = CardFactory::getFactory()->getCard(cardName);
+        if (card) {
+            discardPile.pile.push_back(card);
+        }
+    }
+    return in;
+}

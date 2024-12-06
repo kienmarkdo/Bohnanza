@@ -39,6 +39,18 @@ Card* TradeArea::trade(const std::string& cardName) {
     return nullptr;
 }
 
+bool TradeArea::isEmpty() const {
+    return cards.empty();
+}
+
+const std::list<Card*>& TradeArea::getCards() const {
+    return cards;
+}
+
+void TradeArea::clear() {
+    cards.clear();
+}
+
 // Stream insertion operator to print the entire trade area
 std::ostream& operator<<(std::ostream& out, const TradeArea& tradeArea) {
     for (Card* card : tradeArea.tradeCards) {
@@ -47,3 +59,15 @@ std::ostream& operator<<(std::ostream& out, const TradeArea& tradeArea) {
     }
     return out;
 }
+
+std::istream& operator>>(std::istream& in, TradeArea& tradeArea) {
+    std::string cardName;
+    while (in >> cardName) {
+        Card* card = CardFactory::getFactory()->getCard(cardName);
+        if (card) {
+            tradeArea.tradeCards.push_back(card);
+        }
+    }
+    return in;
+}
+

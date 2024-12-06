@@ -12,7 +12,9 @@ public:
     Card* pickUp();
     Card* top() const;
     void print(std::ostream& out) const;
+    
     friend std::ostream& operator<<(std::ostream& out, const DiscardPile& discardPile);
+    friend std::istream& operator>>(std::istream& in, DiscardPile& discardPile);
 
 private:
     std::vector<Card*> pile;

@@ -30,3 +30,14 @@ std::ostream& operator<<(std::ostream& out, const Deck& deck) {
     }
     return out;
 }
+
+std::istream& operator>>(std::istream& in, Deck& deck) {
+    std::string cardName;
+    while (in >> cardName) {
+        Card* card = CardFactory::getFactory()->getCard(cardName);
+        if (card) {
+            deck.cards.push_back(card);
+        }
+    }
+    return in;
+}

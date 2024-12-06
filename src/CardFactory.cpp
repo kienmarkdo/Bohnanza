@@ -28,7 +28,7 @@ void CardFactory::initializeDeck() {
 
     // Shuffle the deck
     std::random_device rd;
-    std::mt19937 g(rd());
+    std::mt19937 g(static_cast<unsigned>(std::time(nullptr))); // Seed with current time
     std::shuffle(deck.begin(), deck.end(), g);
 }
 

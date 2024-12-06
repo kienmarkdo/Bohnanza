@@ -18,7 +18,7 @@ public:
 private:
     CardFactory();
     void initializeDeck();
-    static CardFactory* instance;
+    static std::unique_ptr<CardFactory> instance; // Use unique_ptr for automatic cleanup
     std::vector<std::unique_ptr<Card>> deck;
 };
 

@@ -14,7 +14,13 @@ public:
     TradeArea& operator+=(Card* card);
     bool legal(Card* card) const;
     Card* trade(const std::string& cardName);
+    bool isEmpty() const;
+    const std::list<Card*>& getCards() const;
+    void clear();
+
     friend std::ostream& operator<<(std::ostream& out, const TradeArea& tradeArea);
+    friend std::istream& operator>>(std::istream& in, TradeArea& tradeArea);
+
 
 private:
     std::list<Card*> tradeCards;

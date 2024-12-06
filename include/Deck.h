@@ -12,6 +12,7 @@ public:
     Card* draw();
     int size() const; // Get the number of cards remaining
     friend std::ostream& operator<<(std::ostream& out, const Deck& deck);
+    friend std::istream& operator>>(std::istream& in, Deck& deck);
 
 private:
     std::vector<Card*> cards;
