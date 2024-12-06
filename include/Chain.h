@@ -1,153 +1,80 @@
 #ifndef CHAIN_H
 #define CHAIN_H
 
-#include <vector>
-#include <string>
-#include <iostream>
-#include <memory>
-#include "Card.h"
-#include "CardFactory.h"
-class CardFactory;
-#include <type_traits>
+#include "Chain_Base.h"
+#include <typeinfo>
 
-class IllegalType : public std::exception
-{
-public:
-    const char *what() const noexcept override
-    {
-        return "Attempted to add wrong card type to chain";
-    }
-};
-
-class Chain_Base
-{
-public:
-    virtual ~Chain_Base() = default;
-    virtual int sell() = 0;
-    virtual void serialize(std::ostream &out) const = 0;
-    virtual void print(std::ostream &out) const = 0;
-    virtual int size() const = 0;
-    virtual std::string getType() const = 0;
-    virtual Chain_Base &operator+=(std::unique_ptr<Card> card) = 0;
-    virtual const Card *getFirstCard() const = 0;
-};
-
-template <typename T>
-class Chain : public Chain_Base
-{
-    static_assert(std::is_base_of<Card, T>::value, "Template parameter must be derived from Card");
-
+template<class T>
+class Chain : public Chain_Base {
+private:
+    std::vector<Card*> chain;
 public:
     Chain() = default;
-    Chain(std::istream &in, const CardFactory *factory);
 
-    Chain(Chain &&) noexcept = default;
-    Chain &operator=(Chain &&) noexcept = default;
-
-    Chain(const Chain &) = delete;
-    Chain &operator=(const Chain &) = delete;
-
-    Chain_Base &operator+=(std::unique_ptr<Card> card) override
-    {
-        if (auto *typedCard = dynamic_cast<T *>(card.get()))
-        {
-            cards.push_back(std::unique_ptr<T>(static_cast<T *>(card.release())));
-            return *this;
+    // Add a card to the chain
+    Chain_Base& operator+=(Card* card) override {
+        // Check if card is of type T using dynamic_cast
+        T* casted = dynamic_cast<T*>(card);
+        if (!casted) {
+            throw std::invalid_argument("Attempted to add incorrect card type to chain.");
         }
-        throw IllegalType();
+        chain.push_back(card);
+        return *this;
     }
 
-    const Card *getFirstCard() const override
-    {
-        return cards.empty() ? nullptr : cards[0].get();
-    }
+    // Sell the chain
+    // The logic: 
+    // 1. Determine how many cards are in the chain.
+    // 2. For each possible coin value (4 down to 1), check if we have enough cards to earn that many coins using card->getCardsPerCoin().
+    //    We assume all cards are the same type, so just use the first card’s getCardsPerCoin.
+    int sell() const override {
+        if (chain.empty()) return 0;
+        const Card* example = chain.front();
+        int totalCards = (int)chain.size();
 
-    int sell() override
-    {
-        if (cards.empty())
-            return 0;
-
-        int numCards = cards.size();
-        const T *card = static_cast<const T *>(cards[0].get());
-
-        for (int coins = 4; coins > 0; --coins)
-        {
-            if (numCards >= card->getCardsPerCoin(coins))
-            {
-                return coins;
+        // Try from 4 coins down to 1 coin
+        for (int coins = 4; coins >= 1; --coins) {
+            try {
+                int needed = example->getCardsPerCoin(coins);
+                if (totalCards >= needed) {
+                    return coins;
+                }
+            } catch (...) {
+                // If getCardsPerCoin throws, ignore and continue down
             }
         }
         return 0;
     }
 
-    int size() const override { return cards.size(); }
-
-    std::string getType() const override
-    {
-        if (!cards.empty())
-        {
-            return cards[0]->getName();
-        }
-
-        if (std::is_same<T, Blue>::value)
-        {
-            return "Blue";
-        }
-        else if (std::is_same<T, Chili>::value)
-        {
-            return "Chili";
-        }
-        else if (std::is_same<T, Green>::value)
-        {
-            return "Green";
-        }
-        else if (std::is_same<T, Soy>::value)
-        {
-            return "Soy";
-        }
-        else if (std::is_same<T, Black>::value)
-        {
-            return "Black";
-        }
-        else if (std::is_same<T, Red>::value)
-        {
-            return "Red";
-        }
-        else if (std::is_same<T, Garden>::value)
-        {
-            return "Garden";
-        }
-        else
-        {
-            return "Unknown";
+    std::string getBeanName() const override {
+        if (chain.empty()) {
+            // If empty, we return the template type name anyway.
+            T tempCard;
+            return tempCard.getName();
+        } else {
+            return chain.front()->getName();
         }
     }
 
-    void print(std::ostream &out) const override
-    {
-        out << getType() << " ";
-        for (const auto &card : cards)
-        {
-            card->print(out);
-            out << " ";
+    void print(std::ostream& out) const override {
+        // Print the bean name, then the cards
+        // Format: "Blue  B B B ..."
+        if (chain.empty()) {
+            T tempCard;
+            out << tempCard.getName() << " ";
+        } else {
+            out << chain.front()->getName() << " ";
+        }
+
+        for (auto c : chain) {
+            out << *c << " ";
         }
     }
 
-    void serialize(std::ostream &out) const override
-    {
-        out << getType() << "\n";
-        out << size() << "\n";
-        for (const auto &card : cards)
-        {
-            out << card->getName() << "\n";
-        }
-        out << "END_CHAIN\n";
+    // Optional: Could provide a way to retrieve the number of cards
+    size_t size() const {
+        return chain.size();
     }
-
-    ~Chain() = default;
-
-private:
-    std::vector<std::unique_ptr<T>> cards;
 };
 
-#endif // CHAIN_H
+#endif

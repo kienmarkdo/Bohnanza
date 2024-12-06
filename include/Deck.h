@@ -2,42 +2,45 @@
 #define DECK_H
 
 #include <vector>
-#include <memory>
 #include <iostream>
 #include "Card.h"
 
-class CardFactory;
-
-class Deck
-{
+class Deck {
 private:
-    std::vector<std::unique_ptr<Card>> cards;
-
+    std::vector<Card*> cards;
 public:
-    // Constructors
     Deck() = default;
-    Deck(std::istream &in, const CardFactory *factory);
+    Deck(const std::vector<Card*>& cardList) : cards(cardList) {}
 
-    // Move operations
-    Deck(Deck &&) noexcept = default;
-    Deck &operator=(Deck &&) noexcept = default;
+    // Draws the top card from the deck and returns it, removing it from the deck
+    // If empty, returns nullptr or throws an exception
+    Card* draw() {
+        if (cards.empty()) {
+            return nullptr;
+        }
+        Card* top = cards.back();
+        cards.pop_back();
+        return top;
+    }
 
-    // Delete copy operations
-    Deck(const Deck &) = delete;
-    Deck &operator=(const Deck &) = delete;
+    // Returns the number of cards left in the deck
+    size_t size() const {
+        return cards.size();
+    }
 
-    // Core functionality
-    std::unique_ptr<Card> draw();
-    void addCard(std::unique_ptr<Card> card);
-    bool empty() const { return cards.empty(); }
-    size_t size() const { return cards.size(); }
+    // Insert a card at the bottom of the deck (front)
+    void push_front(Card* c) {
+        cards.insert(cards.begin(), c);
+    }
 
-    // Serialization
-    void serialize(std::ostream &out) const;
-    friend std::ostream &operator<<(std::ostream &out, const Deck &deck);
-
-    // Destructor (can be defaulted since using unique_ptr)
-    ~Deck() = default;
+    // Print deck: print all cards from top to bottom or bottom to top as needed.
+    // Typically for debugging: print top at the rightmost side.
+    friend std::ostream& operator<<(std::ostream& out, const Deck& deck) {
+        for (auto c : deck.cards) {
+            out << *c << " ";
+        }
+        return out;
+    }
 };
 
-#endif // DECK_H
+#endif

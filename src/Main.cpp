@@ -1,460 +1,183 @@
-#include <fstream>
 #include <iostream>
-#include <string>
-#include <limits>
 #include <stdexcept>
-#include <memory>
+#include <string>
+#include "Card.h"
 #include "CardFactory.h"
 #include "Table.h"
+#include "Player.h"
+#include "Chain.h"
+#include "DiscardPile.h"
+#include "TradeArea.h"
+#include "Hand.h"
+#include "Deck.h"
 
-bool getUserChoice(const std::string &prompt)
-{
-    std::string input;
-    while (true)
-    {
-        std::cout << prompt << " (y/n): ";
-
-        if (!std::getline(std::cin, input))
-        {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            continue;
-        }
-
-        input.erase(0, input.find_first_not_of(" \t\n\r\f\v"));
-        input.erase(input.find_last_not_of(" \t\n\r\f\v") + 1);
-
-        if (input.length() == 1)
-        {
-            char choice = std::tolower(input[0]);
-            if (choice == 'y')
-                return true;
-            if (choice == 'n')
-                return false;
-        }
-
-        std::cout << "Invalid input. Please enter 'y' or 'n'.\n";
-    }
+static void printCommands() {
+    std::cout << "Commands:\n"
+              << "  show            - Show the current game state\n"
+              << "  play            - Play the top card from your hand onto a chain if possible, else discard\n"
+              << "  trade           - Attempt to place top card of your hand into the TradeArea if legal, else discard\n"
+              << "  discard         - Discard the top card of your hand\n"
+              << "  end             - End your turn\n"
+              << std::endl;
 }
 
-void clearScreen()
-{
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
-}
+int main() {
+    try {
+        CardFactory* factory = CardFactory::getFactory();
+        Deck deck = factory->getDeck();
 
-int main()
-{
-    std::cout << "=== Bean Trading Card Game ===\n\n";
+        Table table("Alice", "Bob", std::move(deck));
+        Player& p1 = table.getPlayer1();
+        Player& p2 = table.getPlayer2();
 
-    std::cout << "Creating CardFactory...\n";
-    auto factory = CardFactory::getFactory();
-
-    std::string player1, player2;
-    std::cout << "Enter name for Player 1: ";
-    std::getline(std::cin, player1);
-    std::cout << "Enter name for Player 2: ";
-    std::getline(std::cin, player2);
-
-    std::cout << "Creating game table...\n";
-    auto gameTable = std::make_unique<Table>(player1, player2);
-    std::cout << "Creating initial deck...\n";
-    auto initialDeck = factory->getDeck();
-    std::cout << "Initial deck size: " << initialDeck->size() << "\n";
-
-    // Set the deck in the table
-    gameTable->getDeck() = std::move(*initialDeck);
-
-    // Deal initial hands
-    std::cout << "Dealing initial hands...\n";
-    for (int i = 0; i < 5; ++i)
-    {
-        if (gameTable->getDeck().empty())
-        {
-            std::cout << "Error: Deck empty while dealing initial hands\n";
-            break;
+        // Deal initial hands (5 cards each for example)
+        for (int i = 0; i < 5; ++i) {
+            p1 += table.getDeck().draw();
+            p2 += table.getDeck().draw();
         }
 
-        auto card1 = gameTable->getDeck().draw();
-        auto card2 = gameTable->getDeck().draw();
+        // Create initial chains (example)
+        p1.createChain<Blue>();
+        p1.createChain<Chili>();
+        p2.createChain<Stink>();
+        p2.createChain<Green>();
 
-        if (card1 && card2)
-        {
-            gameTable->getPlayer(1).addToHand(std::move(card1));
-            gameTable->getPlayer(2).addToHand(std::move(card2));
-        }
-        else
-        {
-            std::cout << "Error: Null card drawn\n";
-            break;
-        }
-    }
+        std::cout << "Welcome to the Interactive Card Game!\n";
+        std::cout << "There are two players: " << p1.getName() << " and " << p2.getName() << "." << std::endl;
 
-    // Main game loop
-    while (gameTable && !gameTable->getDeck().empty())
-    {
-        std::cout << *gameTable;
+        bool gameOver = false;
+        Player* currentPlayer = &p1;
+        Player* otherPlayer = &p2;
+        int turnCount = 1;
 
-        Player &currentPlayer = gameTable->getPlayer(gameTable->getCurrentPlayer());
-        std::cout << "\n=== " << currentPlayer.getName() << "'s Turn ===\n";
-
-        // Save game logic
-        if (getUserChoice("Would you like to pause and save the game?"))
-        {
-            std::string filename;
-            std::cout << "Enter filename to save: ";
-            std::getline(std::cin, filename);
-
-            try
-            {
-                std::ofstream saveFile(filename);
-                if (!saveFile)
-                {
-                    throw std::runtime_error("Could not open file for saving: " + filename);
-                }
-                gameTable->saveGame(saveFile);
-                std::cout << "Game saved successfully!\n";
-
-                if (!getUserChoice("Would you like to continue playing?"))
-                {
-                    std::cout << "Starting cleanup...\n";
-                    gameTable.reset();
-                    std::cout << "Game table cleared\n";
-                    return 0;
-                }
+        while (!gameOver) {
+            // Check if deck is empty -> game over
+            if (table.getDeck().size() == 0) {
+                gameOver = true;
+                break;
             }
-            catch (const std::exception &e)
-            {
-                std::cerr << "Error during save: " << e.what() << "\n";
-                return 1;
-            }
-        }
 
-        // Draw phase
-        if (!gameTable->getDeck().empty())
-        {
-            auto drawnCard = gameTable->getDeck().draw();
-            if (drawnCard)
-            {
-                std::cout << "\nDrawn card: ";
-                std::cout << drawnCard->getName();
-                std::cout << "\n";
-                currentPlayer.addToHand(std::move(drawnCard));
-            }
-        }
+            std::cout << "\n=== Turn " << turnCount << " ===" << std::endl;
+            std::cout << "Current player: " << currentPlayer->getName() << std::endl;
 
-        // Trade area phase
-        if (!gameTable->getTradeArea().empty())
-        {
-            std::cout << "\nCurrent trade area: " << gameTable->getTradeArea() << "\n";
-            while (!gameTable->getTradeArea().empty() &&
-                   getUserChoice("Would you like to add a card from the trade area to your chains?"))
-            {
-                std::cout << "Available beans in trade area: " << gameTable->getTradeArea() << "\n";
-                std::cout << "Enter bean name to chain (or 'skip' to move on): ";
-                std::string beanName;
-                std::getline(std::cin, beanName);
-                if (beanName == "skip")
-                {
-                    break;
-                }
-                try
-                {
-                    auto tradedCard = gameTable->getTradeArea().trade(beanName);
-
-                    // Determine card type and add to appropriate chain
-                    if (auto *stinkCard = dynamic_cast<Stink *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Stink>(std::move(tradedCard));
-                    }
-                    else if (auto *blueCard = dynamic_cast<Blue *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Blue>(std::move(tradedCard));
-                    }
-                    else if (auto *chiliCard = dynamic_cast<Chili *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Chili>(std::move(tradedCard));
-                    }
-                    else if (auto *greenCard = dynamic_cast<Green *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Green>(std::move(tradedCard));
-                    }
-                    else if (auto *soyCard = dynamic_cast<Soy *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Soy>(std::move(tradedCard));
-                    }
-                    else if (auto *blackCard = dynamic_cast<Black *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Black>(std::move(tradedCard));
-                    }
-                    else if (auto *redCard = dynamic_cast<Red *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Red>(std::move(tradedCard));
-                    }
-                    else if (auto *gardenCard = dynamic_cast<Garden *>(tradedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Garden>(std::move(tradedCard));
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Unknown card type");
-                    }
-
-                    std::cout << "Card chained.\n";
-                }
-                catch (const std::exception &e)
-                {
-                    std::cout << "Error: " << e.what() << "\n";
-                }
-            }
-        }
-
-        // Play cards phase
-        try
-        {
-            auto playedCard = currentPlayer.playFromHand();
-            std::cout << "\nPlayed card: ";
-            std::cout << playedCard->getName();
-            std::cout << "\n";
-            try
-            {
-                if (auto *stinkCard = dynamic_cast<Stink *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Stink>(std::move(playedCard));
-                }
-                else if (auto *blueCard = dynamic_cast<Blue *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Blue>(std::move(playedCard));
-                }
-                else if (auto *chiliCard = dynamic_cast<Chili *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Chili>(std::move(playedCard));
-                }
-                else if (auto *greenCard = dynamic_cast<Green *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Green>(std::move(playedCard));
-                }
-                else if (auto *soyCard = dynamic_cast<Soy *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Soy>(std::move(playedCard));
-                }
-                else if (auto *blackCard = dynamic_cast<Black *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Black>(std::move(playedCard));
-                }
-                else if (auto *redCard = dynamic_cast<Red *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Red>(std::move(playedCard));
-                }
-                else if (auto *gardenCard = dynamic_cast<Garden *>(playedCard.get()))
-                {
-                    currentPlayer.addCardToChain<Garden>(std::move(playedCard));
-                }
-                else
-                {
-                    throw std::runtime_error("Unknown card type");
-                }
-                std::cout << "Card chained.\n";
-            }
-            catch (const std::exception &e)
-            {
-                currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
-                // std::cout << "Failed to create chain: " << e.what() << "\n";
-            }
-        }
-        catch (const std::exception &e)
-        {
-            std::cout << "Error: " << e.what() << "\n";
-        }
-
-        // Optional second card
-        if (getUserChoice("\nWould you like to play another card?"))
-        {
-            try
-            {
-                auto playedCard = currentPlayer.playFromHand();
-                std::cout << "Played card: ";
-                std::cout << playedCard->getName();
-                std::cout << "\n";
-                try
-                {
-                    if (auto *stinkCard = dynamic_cast<Stink *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Stink>(std::move(playedCard));
-                    }
-                    else if (auto *blueCard = dynamic_cast<Blue *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Blue>(std::move(playedCard));
-                    }
-                    else if (auto *chiliCard = dynamic_cast<Chili *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Chili>(std::move(playedCard));
-                    }
-                    else if (auto *greenCard = dynamic_cast<Green *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Green>(std::move(playedCard));
-                    }
-                    else if (auto *soyCard = dynamic_cast<Soy *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Soy>(std::move(playedCard));
-                    }
-                    else if (auto *blackCard = dynamic_cast<Black *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Black>(std::move(playedCard));
-                    }
-                    else if (auto *redCard = dynamic_cast<Red *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Red>(std::move(playedCard));
-                    }
-                    else if (auto *gardenCard = dynamic_cast<Garden *>(playedCard.get()))
-                    {
-                        currentPlayer.addCardToChain<Garden>(std::move(playedCard));
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Unknown card type");
-                    }
-                    std::cout << "Card chained.\n";
-                }
-                catch (const std::exception &e)
-                {
-                    currentPlayer.addToFrontOfHand(std::move(playedCard)); // Need to implement this
-                    // std::cout << "Failed to create chain: " << e.what() << "\n";
-                }
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "Error: " << e.what() << "\n";
-            }
-        }
-
-        if (getUserChoice("\nWould you like to harvest any chains?"))
-        {
-            std::cout << "Available chains to harvest:\n";
-            for (int i = 0; i < currentPlayer.getNumChains(); i++)
-            {
-                try
-                {
-                    auto &chain = currentPlayer[i];
-                    if (chain.size() > 0)
-                    {
-                        std::cout << i + 1 << ". ";
-                        chain.print(std::cout);
-                        std::cout << " (Value: " << chain.sell() << " coins)\n";
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    continue;
+            // Draw a card at the start of turn if available
+            if (table.getDeck().size() > 0) {
+                Card* drawn = table.getDeck().draw();
+                if (drawn) {
+                    *currentPlayer += drawn;
+                    std::cout << currentPlayer->getName() << " draws a card." << std::endl;
                 }
             }
 
-            std::cout << "Enter chain number to harvest (1-" << currentPlayer.getNumChains()
-                      << ") or 0 to cancel: ";
-            int chainNum;
-            std::cin >> chainNum;
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            bool endTurn = false;
+            printCommands();
 
-            if (chainNum > 0 && chainNum <= currentPlayer.getNumChains())
-            {
-                try
-                {
-                    auto &chain = currentPlayer[chainNum - 1];
-                    std::string chainType = chain.getType();
-                    int coins = 0;
+            while (!endTurn && !gameOver) {
+                std::cout << currentPlayer->getName() << ", enter command: ";
+                std::string command;
+                std::cin >> command;
 
-                    if (chainType == "Blue")
-                        coins = currentPlayer.harvestChain<Blue>();
-                    else if (chainType == "Chili")
-                        coins = currentPlayer.harvestChain<Chili>();
-                    else if (chainType == "Stink")
-                        coins = currentPlayer.harvestChain<Stink>();
-                    else if (chainType == "Green")
-                        coins = currentPlayer.harvestChain<Green>();
-                    else if (chainType == "Soy")
-                        coins = currentPlayer.harvestChain<Soy>();
-                    else if (chainType == "Black")
-                        coins = currentPlayer.harvestChain<Black>();
-                    else if (chainType == "Red")
-                        coins = currentPlayer.harvestChain<Red>();
-                    else if (chainType == "Garden")
-                        coins = currentPlayer.harvestChain<Garden>();
-
-                    if (coins > 0)
-                    {
-                        std::cout << "Harvested " << coins << " coins!\n";
+                if (command == "show") {
+                    std::cout << table << std::endl;
+                    std::cout << currentPlayer->getName() << "'s hand: " << std::endl;
+                    std::cout << *currentPlayer->topCard() << " (top card)" << std::endl;
+                    // Note: We only print top card. If you want the full hand, modify Hand to allow printing safely.
+                } else if (command == "play") {
+                    Card* top = currentPlayer->topCard();
+                    if (!top) {
+                        std::cout << "Your hand is empty!" << std::endl;
+                        continue;
                     }
+                    // Try to play top card onto a matching chain
+                    Card* card = currentPlayer->playCard();
+                    if (!card) {
+                        std::cout << "No card to play." << std::endl;
+                        continue;
+                    }
+
+                    std::string name = card->getName();
+                    bool played = false;
+                    // Try to find a chain that matches the card's bean type
+                    for (int i = 0; i < currentPlayer->getNumChains(); ++i) {
+                        if (currentPlayer->operator[](i).getBeanName() == name) {
+                            currentPlayer->operator[](i) += card;
+                            std::cout << "Played " << name << " card on chain " << (i+1) << std::endl;
+                            played = true;
+                            break;
+                        }
+                    }
+
+                    if (!played) {
+                        // If no suitable chain, discard it
+                        table.getDiscardPile() += card;
+                        std::cout << "No suitable chain for " << name << ", card discarded." << std::endl;
+                    }
+                } else if (command == "trade") {
+                    // Attempt to put the top card of the player's hand into the TradeArea if legal
+                    Card* top = currentPlayer->topCard();
+                    if (!top) {
+                        std::cout << "Your hand is empty!" << std::endl;
+                        continue;
+                    }
+                    Card* card = currentPlayer->playCard(); // remove from hand
+                    if (!card) {
+                        std::cout << "No card to trade." << std::endl;
+                        continue;
+                    }
+                    if (table.getTradeArea().legal(card)) {
+                        table.getTradeArea() += card;
+                        std::cout << "Added " << card->getName() << " to the TradeArea." << std::endl;
+                    } else {
+                        // discard if not legal
+                        table.getDiscardPile() += card;
+                        std::cout << "Not legal to add " << card->getName() << " to TradeArea, card discarded." << std::endl;
+                    }
+                } else if (command == "discard") {
+                    Card* top = currentPlayer->topCard();
+                    if (!top) {
+                        std::cout << "Your hand is empty!" << std::endl;
+                        continue;
+                    }
+                    Card* card = currentPlayer->playCard();
+                    table.getDiscardPile() += card;
+                    std::cout << "Discarded " << card->getName() << std::endl;
+                } else if (command == "end") {
+                    // End this player's turn
+                    endTurn = true;
+                } else {
+                    std::cout << "Unknown command." << std::endl;
+                    printCommands();
                 }
-                catch (const std::exception &e)
-                {
-                    std::cout << "Error harvesting chain: " << e.what() << "\n";
+
+                // Check if deck is empty after actions
+                if (table.getDeck().size() == 0) {
+                    gameOver = true;
                 }
             }
-        }
-        // Discard phase
-        if (getUserChoice("\nWould you like to discard a card?"))
-        {
-            currentPlayer.printHand(std::cout, true);
-            std::cout << "Enter index of card to discard: ";
-            int index;
-            std::cin >> index;
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-            try
-            {
-                auto discardedCard = currentPlayer.getCardFromHand(index);
-                gameTable->getDiscardPile() += std::move(discardedCard);
-                std::cout << gameTable->getDiscardPile();
-                std::cout
-                    << "Card discarded.\n";
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "Error discarding card: " << e.what() << "\n";
-            }
+            // Switch player
+            Player* temp = currentPlayer;
+            currentPlayer = otherPlayer;
+            otherPlayer = temp;
+            turnCount++;
         }
 
-        // Draw trade cards
-        std::cout << ">>> " << currentPlayer.getName() << " draws three cards from deck and places in trade area." << std::endl
-                  << std::endl;
+        // Game ended
+        std::cout << "\nGame Over! The deck is empty." << std::endl;
+        std::cout << "Final state:\n" << table << std::endl;
+        std::cout << p1.getName() << " has " << p1.getNumCoins() << " coins." << std::endl;
+        std::cout << p2.getName() << " has " << p2.getNumCoins() << " coins." << std::endl;
 
-        for (int i = 0; i < 3 && !gameTable->getDeck().empty(); ++i)
-        {
-            gameTable->getTradeArea() += std::move(gameTable->getDeck().draw());
-        }
-        std::cout << gameTable->getTradeArea();
-
-        // Process matching cards from discard pile
-        while (!gameTable->getDiscardPile().empty() &&
-               gameTable->getTradeArea().legal(gameTable->getDiscardPile().top()))
-        {
-            gameTable->getTradeArea() += std::move(gameTable->getDiscardPile().pickUp());
+        if (p1.getNumCoins() > p2.getNumCoins()) {
+            std::cout << p1.getName() << " wins!" << std::endl;
+        } else if (p2.getNumCoins() > p1.getNumCoins()) {
+            std::cout << p2.getName() << " wins!" << std::endl;
+        } else {
+            std::cout << "It's a tie!" << std::endl;
         }
 
-        // Draw end phase cards
-        for (int i = 0; i < 2 && !gameTable->getDeck().empty(); ++i)
-        {
-            currentPlayer.addToHand(std::move(gameTable->getDeck().draw()));
-        }
-
-        gameTable->nextPlayer();
-
-        std::cout << "\nPress Enter to continue...";
-        std::cin.get();
-    }
-
-    // Game end
-    std::string winnerName;
-    if (gameTable->win(winnerName))
-    {
-        std::cout << "\nGame Over! The winner is: " << winnerName << "!\n";
-    }
-    else
-    {
-        std::cout << "\nGame Over! It's a tie!\n";
+    } catch (const std::exception& e) {
+        std::cerr << "Exception occurred: " << e.what() << std::endl;
     }
 
     return 0;
