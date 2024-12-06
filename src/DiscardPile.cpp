@@ -2,6 +2,15 @@
 #include "CardFactory.h"
 #include <stdexcept>
 
+/**
+ * @brief Constructs a DiscardPile from a saved game state
+ *
+ * @param in Input stream containing serialized discard pile data
+ * @param factory Pointer to the CardFactory used to create cards
+ *
+ * Reads card names from the input stream until "END_DISCARD" is encountered.
+ * Each card is recreated using the provided CardFactory.
+ */
 DiscardPile::DiscardPile(std::istream &in, const CardFactory *factory)
 {
     cards.clear();
@@ -16,6 +25,7 @@ DiscardPile::DiscardPile(std::istream &in, const CardFactory *factory)
 
         try
         {
+            // Create card from saved name using factory
             auto card = std::unique_ptr<Card>(factory->getFactory()->createCard(cardName));
             if (card)
             {
@@ -29,6 +39,13 @@ DiscardPile::DiscardPile(std::istream &in, const CardFactory *factory)
     }
 }
 
+/**
+ * @brief Adds a card to the top of the discard pile
+ *
+ * @param card Unique pointer to the card being discarded
+ * @return Reference to the modified DiscardPile
+ * @throws std::invalid_argument if card pointer is null
+ */
 DiscardPile &DiscardPile::operator+=(std::unique_ptr<Card> card)
 {
     if (!card)
@@ -39,6 +56,12 @@ DiscardPile &DiscardPile::operator+=(std::unique_ptr<Card> card)
     return *this;
 }
 
+/**
+ * @brief Removes and returns the top card from the discard pile
+ *
+ * @return Unique pointer to the picked up card
+ * @throws std::runtime_error if the discard pile is empty
+ */
 std::unique_ptr<Card> DiscardPile::pickUp()
 {
     if (cards.empty())
@@ -51,6 +74,12 @@ std::unique_ptr<Card> DiscardPile::pickUp()
     return topCard;
 }
 
+/**
+ * @brief Returns a pointer to the top card without removing it
+ *
+ * @return Raw pointer to the top card
+ * @throws std::runtime_error if the discard pile is empty
+ */
 const Card *DiscardPile::top() const
 {
     if (cards.empty())
@@ -60,11 +89,24 @@ const Card *DiscardPile::top() const
     return cards.back().get();
 }
 
+/**
+ * @brief Checks if the discard pile is empty
+ *
+ * @return true if pile contains no cards, false otherwise
+ */
 bool DiscardPile::empty() const
 {
     return cards.empty();
 }
 
+/**
+ * @brief Prints the current state of the discard pile
+ *
+ * @param out Output stream to print to
+ *
+ * Prints "(empty)" if pile is empty, otherwise prints the name
+ * of the top card.
+ */
 void DiscardPile::print(std::ostream &out) const
 {
     out << "Discard Pile: ";
@@ -79,6 +121,14 @@ void DiscardPile::print(std::ostream &out) const
     out << "\n";
 }
 
+/**
+ * @brief Serializes the discard pile to an output stream
+ *
+ * @param out Output stream to write to
+ *
+ * Writes each card's name followed by a newline.
+ * Ends with "END_DISCARD" marker.
+ */
 void DiscardPile::serialize(std::ostream &out) const
 {
     for (const auto &card : cards)
@@ -91,6 +141,16 @@ void DiscardPile::serialize(std::ostream &out) const
     out << "END_DISCARD\n";
 }
 
+/**
+ * @brief Stream insertion operator for DiscardPile
+ *
+ * @param out Output stream
+ * @param pile DiscardPile to output
+ * @return Reference to the output stream
+ *
+ * Prints "(empty)" if pile is empty, otherwise prints the name
+ * of the top card.
+ */
 std::ostream &operator<<(std::ostream &out, const DiscardPile &pile)
 {
     if (pile.empty())
