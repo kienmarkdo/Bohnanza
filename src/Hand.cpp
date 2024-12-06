@@ -18,8 +18,12 @@ Card* Hand::top() const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Hand& hand) {
-    for (auto c : hand.cards) {
-        out << *c << " ";
+    if (hand.cards.empty()) {
+        out << "(empty hand)";
+    } else {
+        for (auto c : hand.cards) {
+            out << *c << " ";
+        }
     }
     return out;
 }

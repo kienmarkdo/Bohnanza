@@ -6,6 +6,11 @@ TradeArea& TradeArea::operator+=(Card* card) {
 }
 
 bool TradeArea::legal(Card* card) const {
+    if (cards.empty()) {
+        // If the trade area is empty, allow the first card of any bean.
+        return true;
+    }
+
     std::string name = card->getName();
     for (auto c : cards) {
         if (c->getName() == name) {

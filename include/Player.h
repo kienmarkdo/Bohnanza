@@ -6,9 +6,13 @@
 #include <iostream>
 #include "Chain_Base.h"
 #include "Hand.h"
-#include "Chain.h" // to instantiate chains
+#include "Chain.h"
 #include "Card.h"
 
+/**
+ * @class Player
+ * @brief Represents a player with a name, coins, chains, and a hand of cards.
+ */
 class Player {
 private:
     std::string name;
@@ -18,29 +22,50 @@ private:
     int maxChains; // Typically 2, can be increased to 3
 
 public:
+    /**
+     * @brief Construct a player with a given name.
+     */
     Player(const std::string& playerName);
 
-    // Returns player's name
+    /**
+     * @brief Get the player's name.
+     */
     std::string getName() const;
 
-    // How many coins does player have
+    /**
+     * @brief Get how many coins the player has.
+     */
     int getNumCoins() const;
 
-    // Add coins
+    /**
+     * @brief Add coins to the player's total.
+     */
     void addCoins(int c);
 
-    // Buy a third chain for 2 coins (if allowed)
+    /**
+     * @brief Attempt to buy a third chain for 2 coins.
+     * @return true if successful, false otherwise.
+     */
     bool buyThirdChain();
 
-    // How many chains does player have
+    /**
+     * @brief Get maximum number of chains (2 or 3).
+     */
     int getMaxNumChains() const;
 
+    /**
+     * @brief Get current number of chains.
+     */
     int getNumChains() const;
 
-    // Access to a chain
+    /**
+     * @brief Access a chain by index.
+     */
     Chain_Base& operator[](int i);
 
-    // Add a chain of a given type T if needed
+    /**
+     * @brief Create a chain of a specific bean type (template).
+     */
     template<class T>
     void createChain() {
         if ((int)chains.size() < maxChains) {
@@ -50,17 +75,29 @@ public:
         }
     }
 
-    // Add a card to player's hand
+    /**
+     * @brief Add a card to the player's hand.
+     */
     Player& operator+=(Card* card);
 
-    // Take the top card from player's hand
+    /**
+     * @brief Remove and return the top card from the player's hand.
+     */
     Card* playCard();
 
-    // Return the top card
+    /**
+     * @brief View the top card without removing it.
+     */
     Card* topCard() const;
 
-    // Print player:
-    // Format: prints player’s name, coins, and each chain on its own line.
+    /**
+     * @brief Get a const reference to the player's hand for printing.
+     */
+    const Hand& getHand() const { return hand; }
+
+    /**
+     * @brief Print the player status to an ostream.
+     */
     friend std::ostream& operator<<(std::ostream& out, const Player& player);
 
     ~Player();
