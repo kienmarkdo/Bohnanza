@@ -1,0 +1,160 @@
+$ ./play.sh 
+=== Bean Trading Card Game ===
+
+Creating CardFactory...
+Would you like to load a saved game? (y/n): y
+Enter the filename to load from: savegame.txt
+Error loading trade area card: Unable to create card: 5
+Game loaded successfully!
+=== Player 1: Mark ===
+Mark    1 coins
+empty
+Blue    Blue B B 
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B 
+Green   Green G 
+
+=== Trading Area ===
+Garden Stink Red Stink Green 
+=== Discard Pile ===
+Discard Pile: (empty)
+
+=== John's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Black
+
+Current trade area: Garden Stink Red Stink Green
+Would you like to add a card from the trade area to your chains? (y/n): n
+
+Played card: Green
+Card chained.
+
+Would you like to play another card? (y/n): n
+
+Would you like to harvest any chains? (y/n): y 
+Available chains to harvest:
+1. Blue B  (Value: 0 coins)
+2. Green G G  (Value: 0 coins)
+Enter chain number to harvest (1-2) or 0 to cancel: 0
+
+Would you like to discard a card? (y/n): y
+Hand: b G s B R b Enter index of card to discard: 0
+BlackCard discarded.
+>>> John draws three cards from deck and places in trade area.
+
+Garden Stink Red Stink Green Chili Soy Blue
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    1 coins
+empty
+Blue    Blue B B
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B
+Green   Green G G
+
+=== Trading Area ===
+Garden Stink Red Stink Green Chili Soy Blue
+=== Discard Pile ===
+Discard Pile: Black
+
+=== Mark's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Chili
+
+Current trade area: Garden Stink Red Stink Green Chili Soy Blue
+Would you like to add a card from the trade area to your chains? (y/n): n
+
+Played card: Green
+Card chained.
+
+Would you like to play another card? (y/n): y
+Played card: Garden
+Error: Cannot add null card to hand
+
+Would you like to harvest any chains? (y/n): n
+
+Would you like to discard a card? (y/n): n
+>>> Mark draws three cards from deck and places in trade area.
+
+Garden Stink Red Stink Green Chili Soy Blue Red Red Red
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    1 coins
+Green   Green G
+Blue    Blue B B
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B
+Green   Green G G
+
+=== Trading Area ===
+Garden Stink Red Stink Green Chili Soy Blue Red Red Red
+=== Discard Pile ===
+Discard Pile: Black
+
+=== John's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Blue
+
+Current trade area: Garden Stink Red Stink Green Chili Soy Blue Red Red Red
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Garden Stink Red Stink Green Chili Soy Blue Red Red Red 
+Enter bean name to chain (or 'skip' to move on): Blue
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): Green
+Invalid input. Please enter 'y' or 'n'.
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Garden Stink Red Stink Green Chili Soy Red Red Red 
+Enter bean name to chain (or 'skip' to move on): Green
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): Red
+Invalid input. Please enter 'y' or 'n'.
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Garden Stink Red Stink Chili Soy Red Red Red 
+Enter bean name to chain (or 'skip' to move on): Red
+Error: No available chain slots
+Would you like to add a card from the trade area to your chains? (y/n): n
+
+Played card: Green
+Card chained.
+
+Would you like to play another card? (y/n): n
+
+Would you like to harvest any chains? (y/n): n
+
+Would you like to discard a card? (y/n): n
+>>> John draws three cards from deck and places in trade area.
+
+Garden Stink Stink Chili Soy Red Red Red Stink Garden Blue
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    1 coins
+Green   Green G
+Blue    Blue B B
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B B
+Green   Green G G G G
+
+=== Trading Area ===
+Garden Stink Stink Chili Soy Red Red Red Stink Garden Blue
+=== Discard Pile ===
+Discard Pile: Black
+
+=== Mark's Turn ===
+Would you like to pause and save the game? (y/n): y  
+Enter filename to save: savegame2.txt
+Game saved successfully!
+Would you like to continue playing? (y/n): n
+Starting cleanup...
+Game table cleared
+CardFactory destructor end

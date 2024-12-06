@@ -1,0 +1,165 @@
+$ ./play.sh 
+=== Bean Trading Card Game ===
+
+Creating CardFactory...
+Would you like to load a saved game? (y/n): n
+Enter name for Player 1: Mark
+Enter name for Player 2: John
+Creating game table...
+Creating initial deck...
+Initial deck size: 104
+Dealing initial hands...
+=== Player 1: Mark ===
+Mark    0 coins
+empty
+empty
+
+=== Player 2: John ===
+John    0 coins
+empty
+empty
+
+=== Trading Area ===
+(empty)
+=== Discard Pile ===
+Discard Pile: (empty)
+
+=== Mark's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Chili
+
+Played card: Soy
+Card chained.
+
+Would you like to play another card? (y/n): n
+
+Would you like to harvest any chains? (y/n): n
+
+Would you like to discard a card? (y/n): n
+>>> Mark draws three cards from deck and places in trade area.
+
+Soy Soy Garden
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    0 coins
+Soy     Soy s
+empty
+
+=== Player 2: John ===
+John    0 coins
+empty
+empty
+
+=== Trading Area ===
+Soy Soy Garden
+=== Discard Pile ===
+Discard Pile: (empty)
+
+=== John's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Soy
+
+Current trade area: Soy Soy Garden
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Soy Soy Garden 
+Enter bean name to chain (or 'skip' to move on):
+Error: No matching bean card found in trade area
+Would you like to add a card from the trade area to your chains? (y/n): n
+
+Played card: Blue
+Card chained.
+
+Would you like to play another card? (y/n): y 
+Played card: Green
+Card chained.
+
+Would you like to harvest any chains? (y/n): n
+
+Would you like to discard a card? (y/n): n
+>>> John draws three cards from deck and places in trade area.
+
+Soy Soy Garden Blue Blue Stink
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    0 coins
+Soy     Soy s
+empty
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B
+Green   Green G
+
+=== Trading Area ===
+Soy Soy Garden Blue Blue Stink
+=== Discard Pile ===
+Discard Pile: (empty)
+
+=== Mark's Turn ===
+Would you like to pause and save the game? (y/n): n
+
+Drawn card: Black
+
+Current trade area: Soy Soy Garden Blue Blue Stink
+Would you like to add a card from the trade area to your chains? (y/n): yes
+Invalid input. Please enter 'y' or 'n'.
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Soy Soy Garden Blue Blue Stink 
+Enter bean name to chain (or 'skip' to move on): Soy
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Soy Garden Blue Blue Stink 
+Enter bean name to chain (or 'skip' to move on): Soy
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): y   
+Available beans in trade area: Garden Blue Blue Stink 
+Enter bean name to chain (or 'skip' to move on): Blue
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): y
+Available beans in trade area: Garden Blue Stink 
+Enter bean name to chain (or 'skip' to move on): Blue
+Card chained.
+Would you like to add a card from the trade area to your chains? (y/n): n
+
+Played card: Chili
+Error: Cannot add null card to hand
+
+Would you like to play another card? (y/n): n
+
+Would you like to harvest any chains? (y/n): y
+Available chains to harvest:
+1. Soy s s s  (Value: 1 coins)
+2. Blue B B  (Value: 0 coins)
+Enter chain number to harvest (1-2) or 0 to cancel: 1
+Harvested 1 coins!
+
+Would you like to discard a card? (y/n): n
+>>> Mark draws three cards from deck and places in trade area.
+
+Garden Stink Red Stink Green
+Press Enter to continue...
+=== Player 1: Mark ===
+Mark    1 coins
+empty
+Blue    Blue B B
+
+=== Player 2: John ===
+John    0 coins
+Blue    Blue B
+Green   Green G
+
+=== Trading Area ===
+Garden Stink Red Stink Green
+=== Discard Pile ===
+Discard Pile: (empty)
+
+=== John's Turn ===
+Would you like to pause and save the game? (y/n): y
+Enter filename to save: savegame.txt
+Game saved successfully!
+Would you like to continue playing? (y/n): n
+Starting cleanup...
+Game table cleared
+CardFactory destructor end
