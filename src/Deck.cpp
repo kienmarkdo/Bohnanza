@@ -1,77 +1,32 @@
 #include "Deck.h"
-#include <algorithm>
-#include <stdexcept>
 #include "CardFactory.h"
+#include <sstream>
 
-Deck::Deck(std::istream &in, const CardFactory *factory)
-{
-    cards.clear();
-    std::string cardName;
-
-    while (std::getline(in, cardName))
-    {
-        if (cardName == "END_DECK")
-        {
-            break;
-        }
-
-        try
-        {
-            auto card = factory->getFactory()->createCard(cardName);
-            if (card)
-            {
-                cards.push_back(std::move(card));
-            }
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error loading deck card: " << e.what() << std::endl;
-        }
+// Constructor to initialize deck with given cards
+Deck::Deck(std::vector<std::unique_ptr<Card>>&& cards) {
+    for (auto& card : cards) {
+        this->cards.push_back(card.release()); // Convert unique_ptr to raw pointer
     }
 }
 
-std::unique_ptr<Card> Deck::draw()
-{
-    if (cards.empty())
-    {
-        throw std::runtime_error("Cannot draw from empty deck");
-    }
-
-    std::unique_ptr<Card> topCard = std::move(cards.back());
+// Draws a card from the top of the deck
+Card* Deck::draw() {
+    if (cards.empty()) return nullptr;
+    Card* topCard = cards.back();
     cards.pop_back();
     return topCard;
 }
 
-void Deck::addCard(std::unique_ptr<Card> card)
-{
-    if (!card)
-    {
-        throw std::invalid_argument("Cannot add null card to deck");
-    }
-    cards.push_back(std::move(card));
+// Get the number of cards remaining in the deck
+int Deck::size() const {
+    return static_cast<int>(cards.size());
 }
 
-void Deck::serialize(std::ostream &out) const
-{
-    for (const auto &card : cards)
-    {
-        if (card)
-        {
-            out << card->getName() << "\n";
-        }
-    }
-    out << "END_DECK\n";
-}
-
-std::ostream &operator<<(std::ostream &out, const Deck &deck)
-{
-    for (const auto &card : deck.cards)
-    {
-        if (card)
-        {
-            card->print(out);
-            out << " ";
-        }
+// Stream insertion operator to print the entire deck to an output stream
+std::ostream& operator<<(std::ostream& out, const Deck& deck) {
+    for (Card* card : deck.cards) {
+        card->print(out);
+        out << " ";
     }
     return out;
 }

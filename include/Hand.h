@@ -2,56 +2,21 @@
 #define HAND_H
 
 #include <list>
-#include <memory>
 #include <iostream>
 #include "Card.h"
+#include "CardFactory.h"
 
-class CardFactory;
-
-class Hand
-{
+class Hand {
 public:
-    // Default constructor
-    Hand() = default;
-
-    // Constructor to reconstruct hand from file
-    Hand(std::istream &in, const CardFactory *factory);
-
-    // Move operations
-    Hand(Hand &&) noexcept = default;
-    Hand &operator=(Hand &&) noexcept = default;
-
-    // Delete copy operations
-    Hand(const Hand &) = delete;
-    Hand &operator=(const Hand &) = delete;
-
-    // Core functionality
-    Hand &operator+=(std::unique_ptr<Card> card);
-    std::unique_ptr<Card> play();
-    const Card *top() const;
-    std::unique_ptr<Card> operator[](int index);
-    void addToFront(std::unique_ptr<Card> card);
-
-    // Utility methods
-    bool empty() const
-    {
-        return cards.empty();
-    }
-    size_t size() const { return cards.size(); }
-    void serialize(std::ostream &out) const;
-
-    // Stream operator
-    friend std::ostream &operator<<(std::ostream &out, const Hand &hand);
-
-    // View access to cards (returns const references only)
-    const std::list<std::unique_ptr<Card>> &getCards() const { return cards; }
-
-    // Destructor can be defaulted due to smart pointers
-    ~Hand() = default;
+    Hand(std::istream& in, const CardFactory* factory);
+    Hand& operator+=(Card* card);
+    Card* play();
+    Card* top() const;
+    Card* operator[](int index) const;
+    friend std::ostream& operator<<(std::ostream& out, const Hand& hand);
 
 private:
-    std::list<std::unique_ptr<Card>> cards;
-    void validateIndex(int index) const;
+    std::list<Card*> cards;
 };
 
 #endif // HAND_H

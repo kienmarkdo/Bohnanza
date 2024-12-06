@@ -3,151 +3,25 @@
 
 #include <string>
 #include <vector>
-#include <memory>
-#include "Hand.h"
 #include "Chain.h"
+#include "CardFactory.h"
 
-class NotEnoughCoins : public std::exception
-{
+class Player {
 public:
-    const char *what() const noexcept override
-    {
-        return "Not enough coins to buy third chain";
-    }
-};
+    Player(const std::string& name);
+    Player(std::istream& in, const CardFactory* factory);
+    std::string getName() const;
+    int getNumCoins() const;
+    Player& operator+=(int coins);
+    void addChain(Chain<Card*> chain);
+    void print(std::ostream& out) const;
 
-class Player
-{
-public:
-    // Constructors
-    Player(const std::string &name);
-    Player(std::istream &in, const CardFactory *factory);
-
-    // Getters
-    std::string getName() const { return name; }
-    int getNumCoins() const { return coins; }
-    int getMaxNumChains() const { return (chains.size() >= 3) ? 3 : 2; }
-    int getNumChains() const;
-
-    // Chain operations
-    Chain_Base &operator[](int i);
-    const Chain_Base &operator[](int i) const;
-    void buyThirdChain();
-
-    // Hand operations
-    void addToHand(std::unique_ptr<Card> card) { hand += std::move(card); }
-    std::unique_ptr<Card> playFromHand() { return hand.play(); }
-    std::unique_ptr<Card> getCardFromHand(int index) { return hand[index]; }
-    const Card *getTopCardFromHand() const { return hand.top(); }
-    bool isHandEmpty() const { return hand.empty(); }
-    void addToFrontOfHand(std::unique_ptr<Card> card);
-    // Coin operations
-    Player &operator+=(int additionalCoins);
-
-    // Chain management
-    // New method to handle harvesting
-    template <typename T>
-    int harvestChain()
-    {
-        for (size_t i = 0; i < chains.size(); i++)
-        {
-            if (auto *chain = dynamic_cast<Chain<T> *>(chains[i].get()))
-            {
-                int harvestedCoins = chain->sell();
-                *this += harvestedCoins;
-                chains[i] = nullptr; // Reset the chain
-                return harvestedCoins;
-            }
-        }
-        return 0;
-    }
-
-    template <typename T>
-    Chain<T> *findChainOfType()
-    {
-        for (auto &chain : chains)
-        {
-            if (chain)
-            {
-                if (auto typedChain = dynamic_cast<Chain<T> *>(chain.get()))
-                {
-                    return typedChain;
-                }
-            }
-        }
-        return nullptr;
-    }
-    template <typename T>
-    bool shouldHarvestChain()
-    {
-        if (auto chain = findChainOfType<T>())
-        {
-            if (const Card *firstCard = chain->getFirstCard())
-            {
-                if (const T *typedCard = dynamic_cast<const T *>(firstCard))
-                {
-                    // Get maximum cards per coin value for this type
-                    int maxCards = 0;
-                    for (int coins = 4; coins > 0; --coins)
-                    {
-                        int cardsNeeded = typedCard->getCardsPerCoin(coins);
-                        if (cardsNeeded > 0)
-                        {
-                            maxCards = cardsNeeded;
-                            break;
-                        }
-                    }
-                    return (maxCards > 0 && chain->size() >= maxCards);
-                }
-            }
-        }
-        return false;
-    }
-
-    template <typename T>
-    Chain<T> &addCardToChain(std::unique_ptr<Card> card)
-    {
-        // Check if current chain should be harvested
-        if (shouldHarvestChain<T>())
-        {
-            harvestChain<T>();
-        }
-
-        // Try to find existing chain or create new one
-        if (auto existingChain = findChainOfType<T>())
-        {
-            *existingChain += std::move(card);
-            return *existingChain;
-        }
-
-        // Look for empty slot
-        for (auto &chain : chains)
-        {
-            if (!chain)
-            {
-                chain = std::make_unique<Chain<T>>();
-                *chain += std::move(card);
-                return *dynamic_cast<Chain<T> *>(chain.get());
-            }
-        }
-        throw std::runtime_error("No available chain slots");
-    }
-
-    // Display methods
-    void printHand(std::ostream &out, bool all) const;
-    void serialize(std::ostream &out) const;
-    friend std::ostream &operator<<(std::ostream &out, const Player &player);
-
-    // Destructor can be defaulted since using smart pointers
-    ~Player() = default;
+    friend std::ostream& operator<<(std::ostream& out, const Player& player);
 
 private:
     std::string name;
-    int coins = 0;
-    Hand hand;
-    std::vector<std::unique_ptr<Chain_Base>> chains;
-
-    void validateChainIndex(int index) const;
+    int coins;
+    std::vector<Chain<Card*>> chains;
 };
 
 #endif // PLAYER_H

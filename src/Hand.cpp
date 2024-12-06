@@ -1,117 +1,50 @@
 #include "Hand.h"
-#include <stdexcept>
 #include "CardFactory.h"
-#include <sstream>
 
-Hand::Hand(std::istream &in, const CardFactory *factory)
-{
-    cards.clear();
-    std::string cardName;
-
-    while (std::getline(in, cardName))
-    {
-        if (cardName == "END_HAND")
-        {
-            break;
-        }
-
-        try
-        {
-            auto card = factory->getFactory()->createCard(cardName);
-            if (card)
-            {
-                *this += std::move(card);
-            }
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error loading hand card: " << e.what() << std::endl;
-        }
-    }
+// Constructor to load the hand from an input stream
+Hand::Hand(std::istream& in, const CardFactory* factory) {
+    // Load cards from input stream
 }
 
-Hand &Hand::operator+=(std::unique_ptr<Card> card)
-{
-    if (!card)
-    {
-        throw std::invalid_argument("Cannot add null card to hand");
-    }
-
-    // Add card to back of list (rear of hand)
-    cards.push_back(std::move(card));
+// Add a card to the hand
+Hand& Hand::operator+=(Card* card) {
+    cards.push_back(card);
     return *this;
 }
 
-std::unique_ptr<Card> Hand::play()
-{
-    if (cards.empty())
-    {
-        throw std::runtime_error("Cannot play from empty hand");
-    }
-
-    // Remove and return first card (front of hand)
-    std::unique_ptr<Card> topCard = std::move(cards.front());
+// Play (remove) the top card from the hand
+Card* Hand::play() {
+    if (cards.empty()) return nullptr;
+    Card* topCard = cards.front();
     cards.pop_front();
     return topCard;
 }
 
-void Hand::addToFront(std::unique_ptr<Card> card)
-{
-    cards.push_front(std::move(card));
+// Peek at the top card of the hand without removing it
+Card* Hand::top() const {
+    if (cards.empty()) return nullptr;
+    return cards.front();
 }
 
-const Card *Hand::top() const
-{
-    if (cards.empty())
-    {
-        throw std::runtime_error("Cannot get top card from empty hand");
+// Access a card by index
+Card* Hand::operator[](int index) const {
+
+    // invalid index access
+    if (index < 0 || index >= static_cast<int>(cards.size())) {
+        throw std::out_of_range("Invalid index for Hand");
     }
 
-    return cards.front().get();
+
+    if (index < 0 || index >= static_cast<int>(cards.size())) return nullptr;
+    auto it = cards.begin();
+    std::advance(it, index);
+    return *it;
 }
 
-void Hand::validateIndex(int index) const
-{
-    if (index < 0 || index >= static_cast<int>(cards.size()))
-    {
-        std::ostringstream oss;
-        oss << "Index " << index << " is out of range. Hand size is " << cards.size();
-        throw std::out_of_range(oss.str());
-    }
-}
-
-std::unique_ptr<Card> Hand::operator[](int index)
-{
-    validateIndex(index);
-
-    // Find the card at the specified index
-    auto it = std::next(cards.begin(), index);
-
-    // Move ownership of the card and remove it from the list
-    std::unique_ptr<Card> card = std::move(*it);
-    cards.erase(it);
-    return card;
-}
-
-std::ostream &operator<<(std::ostream &out, const Hand &hand)
-{
-    out << "Hand: ";
-    for (const auto &card : hand.cards)
-    {
-        card->print(out);
-        out << " ";
+// Stream insertion operator to print the entire hand
+std::ostream& operator<<(std::ostream& out, const Hand& hand) {
+    for (Card* card : hand.cards) {
+        out << *card << " ";
     }
     return out;
-}
-
-void Hand::serialize(std::ostream &out) const
-{
-    for (const auto &card : cards)
-    {
-        if (card)
-        {
-            out << card->getName() << "\n";
-        }
-    }
-    out << "END_HAND\n";
 }

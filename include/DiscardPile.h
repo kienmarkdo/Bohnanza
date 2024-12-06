@@ -1,44 +1,21 @@
-#ifndef DISCARD_PILE_H
-#define DISCARD_PILE_H
+#ifndef DISCARDPILE_H
+#define DISCARDPILE_H
 
 #include <vector>
-#include <memory>
-#include <iostream>
 #include "Card.h"
+#include <iostream>
 
-class CardFactory;
-
-class DiscardPile
-{
-private:
-    std::vector<std::unique_ptr<Card>> cards;
-
+class DiscardPile {
 public:
-    // Constructors
-    DiscardPile() = default;
-    DiscardPile(std::istream &in, const CardFactory *factory);
+    DiscardPile();
+    void push(Card* card);
+    Card* pickUp();
+    Card* top() const;
+    void print(std::ostream& out) const;
+    friend std::ostream& operator<<(std::ostream& out, const DiscardPile& discardPile);
 
-    // Move operations
-    DiscardPile(DiscardPile &&other) noexcept = default;
-    DiscardPile &operator=(DiscardPile &&other) noexcept = default;
-
-    // Delete copy operations
-    DiscardPile(const DiscardPile &) = delete;
-    DiscardPile &operator=(const DiscardPile &) = delete;
-
-    // Member functions
-    DiscardPile &operator+=(std::unique_ptr<Card> card);
-    std::unique_ptr<Card> pickUp();
-    const Card *top() const;
-    bool empty() const;
-    void print(std::ostream &out) const;
-    void serialize(std::ostream &out) const;
-
-    // Destructor
-    ~DiscardPile() = default;
-
-    // Friend operator
-    friend std::ostream &operator<<(std::ostream &out, const DiscardPile &pile);
+private:
+    std::vector<Card*> pile;
 };
 
-#endif // DISCARD_PILE_H
+#endif // DISCARDPILE_H
