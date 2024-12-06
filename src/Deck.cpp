@@ -3,6 +3,11 @@
 #include <stdexcept>
 #include "CardFactory.h"
 
+/**
+ * @brief Construct a Deck from saved data in a stream. Reads card names until "END_DECK".
+ * @param in Input stream containing deck data.
+ * @param factory CardFactory to recreate cards from names.
+ */
 Deck::Deck(std::istream &in, const CardFactory *factory)
 {
     cards.clear();
@@ -30,6 +35,11 @@ Deck::Deck(std::istream &in, const CardFactory *factory)
     }
 }
 
+/**
+ * @brief Draw and remove the top card from the deck.
+ * @return A unique_ptr to the drawn card.
+ * @throws std::runtime_error if the deck is empty.
+ */
 std::unique_ptr<Card> Deck::draw()
 {
     if (cards.empty())
@@ -42,6 +52,11 @@ std::unique_ptr<Card> Deck::draw()
     return topCard;
 }
 
+/**
+ * @brief Add a card to the top of the deck.
+ * @param card The card to add. Must not be null.
+ * @throws std::invalid_argument if card is null.
+ */
 void Deck::addCard(std::unique_ptr<Card> card)
 {
     if (!card)
@@ -51,6 +66,10 @@ void Deck::addCard(std::unique_ptr<Card> card)
     cards.push_back(std::move(card));
 }
 
+/**
+ * @brief Serialize the deck to an output stream, writing card names followed by "END_DECK".
+ * @param out The output stream to write to.
+ */
 void Deck::serialize(std::ostream &out) const
 {
     for (const auto &card : cards)
@@ -63,6 +82,12 @@ void Deck::serialize(std::ostream &out) const
     out << "END_DECK\n";
 }
 
+/**
+ * @brief Overload of operator<< for decks. Prints the deck's cards in order.
+ * @param out Output stream.
+ * @param deck The deck to print.
+ * @return Reference to the output stream.
+ */
 std::ostream &operator<<(std::ostream &out, const Deck &deck)
 {
     for (const auto &card : deck.cards)

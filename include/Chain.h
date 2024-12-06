@@ -10,6 +10,9 @@
 #include "CardFactory.h"
 #include <type_traits>
 
+/**
+ * @brief Exception thrown when attempting to add a card of a wrong type to a chain.
+ */
 class IllegalType : public std::exception {
 public:
     const char *what() const noexcept override {
@@ -17,18 +20,62 @@ public:
     }
 };
 
+/**
+ * @brief Chain_Base is an abstract base class representing a chain of bean cards of a single type.
+ *        It provides methods to sell the chain, serialize it, print it, and access its size and type.
+ */
 class Chain_Base {
 public:
     virtual ~Chain_Base() = default;
+
+    /**
+     * @brief Calculate how many coins the current chain would yield if sold.
+     * @return The number of coins obtained from selling this chain.
+     */
     virtual int sell() = 0;
+
+    /**
+     * @brief Serialize the chain to an output stream for saving the game.
+     * @param out The output stream to write the chain data to.
+     */
     virtual void serialize(std::ostream &out) const = 0;
+
+    /**
+     * @brief Print the chain contents (type and cards).
+     * @param out The output stream to print to.
+     */
     virtual void print(std::ostream &out) const = 0;
+
+    /**
+     * @brief Get the number of cards currently in the chain.
+     * @return The number of cards.
+     */
     virtual int size() const = 0;
+
+    /**
+     * @brief Get the bean type of the chain.
+     * @return The bean type as a string (e.g. "Blue").
+     */
     virtual std::string getType() const = 0;
+
+    /**
+     * @brief Add a card to the chain.
+     * @param card The card to add.
+     * @return A reference to the chain (for chaining operations).
+     * @throws IllegalType if the card type doesn't match the chain type.
+     */
     virtual Chain_Base &operator+=(std::unique_ptr<Card> card) = 0;
+
+    /**
+     * @brief Get a pointer to the first card in the chain, or nullptr if empty.
+     */
     virtual const Card *getFirstCard() const = 0;
 };
 
+/**
+ * @brief The Chain class template represents a chain of a specific bean card type T.
+ *        It enforces type-checking for added cards and provides logic to determine the chain's value.
+ */
 template <typename T>
 class Chain : public Chain_Base {
     static_assert(std::is_base_of<Card, T>::value, "Template parameter must be derived from Card");
@@ -36,15 +83,17 @@ class Chain : public Chain_Base {
 public:
     Chain() = default;
 
-    // Updated constructor to load from file
+    /**
+     * @brief Construct a Chain by loading its state from an input stream.
+     *        The chain type line is assumed to be already read by the caller.
+     * @param in Input stream containing saved chain data.
+     * @param factory The CardFactory used to recreate cards.
+     */
     Chain(std::istream &in, const CardFactory *factory) {
-        // We assume the player has already read the chain type line.
-        // Next line: size of the chain
         int chainSize;
         in >> chainSize;
         in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        // Read each card name
         for (int i = 0; i < chainSize; ++i) {
             std::string cardName;
             std::getline(in, cardName);
@@ -58,7 +107,6 @@ public:
             }
         }
 
-        // Read the "END_CHAIN" line
         std::string endChain;
         std::getline(in, endChain);
         if (endChain != "END_CHAIN") {
@@ -106,6 +154,7 @@ public:
             return cards[0]->getName();
         }
 
+        // If empty, determine type by T
         if (std::is_same<T, Blue>::value) {
             return "Blue";
         } else if (std::is_same<T, Chili>::value) {

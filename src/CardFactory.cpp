@@ -6,11 +6,18 @@
 
 std::shared_ptr<CardFactory> CardFactory::instance = nullptr;
 
+/**
+ * @brief CardFactory constructor initializes the card pools.
+ */
 CardFactory::CardFactory()
 {
     initializeCards();
 }
 
+/**
+ * @brief Retrieve the singleton CardFactory instance.
+ * @return Shared pointer to the CardFactory.
+ */
 std::shared_ptr<CardFactory> CardFactory::getFactory()
 {
     if (!instance)
@@ -20,9 +27,12 @@ std::shared_ptr<CardFactory> CardFactory::getFactory()
     return instance;
 }
 
+/**
+ * @brief Initialize all card pools with their respective counts.
+ *        Creates a map of card types to multiple instances.
+ */
 void CardFactory::initializeCards()
 {
-    // Initialize all card pools according to the game requirements
     auto createCards = [this](const std::string &type, int count, auto creator)
     {
         cards[type].reserve(count);
@@ -32,6 +42,7 @@ void CardFactory::initializeCards()
         }
     };
 
+    // Initialize each bean type with the required counts
     createCards("Blue", 20, BeanCreator<Blue>::create);
     createCards("Chili", 18, BeanCreator<Chili>::create);
     createCards("Stink", 16, BeanCreator<Stink>::create);
@@ -42,13 +53,16 @@ void CardFactory::initializeCards()
     createCards("Garden", 6, BeanCreator<Garden>::create);
 }
 
+/**
+ * @brief Create a new Deck containing all the cards, then shuffle it.
+ * @return A unique_ptr to the created, shuffled Deck.
+ */
 std::unique_ptr<Deck> CardFactory::getDeck()
 {
     auto deck = std::make_unique<Deck>();
     std::vector<std::unique_ptr<Card>> allCards;
-    allCards.reserve(104); // Total number of cards in the game
+    allCards.reserve(104); // Total number of cards
 
-    // Modified this part to use iterator instead of structured binding
     for (const auto &pair : cards)
     {
         const auto &cardVec = pair.second;
@@ -58,11 +72,10 @@ std::unique_ptr<Deck> CardFactory::getDeck()
         }
     }
 
-    // Shuffle the cards using a random number generator
+    // Shuffle using current time as seed
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(allCards.begin(), allCards.end(), std::default_random_engine(seed));
 
-    // Move cards to the deck
     for (auto &card : allCards)
     {
         deck->addCard(std::move(card));
@@ -71,26 +84,24 @@ std::unique_ptr<Deck> CardFactory::getDeck()
     return deck;
 }
 
+/**
+ * @brief Create a single card by its name, used during game loading.
+ * @param cardName Name of the card to create.
+ * @return A unique_ptr to the newly created card.
+ * @throws std::runtime_error if the card name is invalid.
+ */
 std::unique_ptr<Card> CardFactory::createCard(const std::string &cardName)
 {
     auto createSpecificCard = [](const std::string &name) -> std::unique_ptr<Card>
     {
-        if (name == "Blue")
-            return std::unique_ptr<Card>(BeanCreator<Blue>::create());
-        if (name == "Chili")
-            return std::unique_ptr<Card>(BeanCreator<Chili>::create());
-        if (name == "Stink")
-            return std::unique_ptr<Card>(BeanCreator<Stink>::create());
-        if (name == "Green")
-            return std::unique_ptr<Card>(BeanCreator<Green>::create());
-        if (name == "Soy")
-            return std::unique_ptr<Card>(BeanCreator<Soy>::create());
-        if (name == "Black")
-            return std::unique_ptr<Card>(BeanCreator<Black>::create());
-        if (name == "Red")
-            return std::unique_ptr<Card>(BeanCreator<Red>::create());
-        if (name == "Garden")
-            return std::unique_ptr<Card>(BeanCreator<Garden>::create());
+        if (name == "Blue")   return BeanCreator<Blue>::create();
+        if (name == "Chili")  return BeanCreator<Chili>::create();
+        if (name == "Stink")  return BeanCreator<Stink>::create();
+        if (name == "Green")  return BeanCreator<Green>::create();
+        if (name == "Soy")    return BeanCreator<Soy>::create();
+        if (name == "Black")  return BeanCreator<Black>::create();
+        if (name == "Red")    return BeanCreator<Red>::create();
+        if (name == "Garden") return BeanCreator<Garden>::create();
         return nullptr;
     };
 

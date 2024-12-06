@@ -7,54 +7,69 @@
 #include "Card.h"
 #include "Deck.h"
 
-class CardFactory
-{
+/**
+ * @brief The CardFactory is a singleton class responsible for creating and managing all
+ *        card instances. It initializes card pools, can shuffle them into a deck, and create
+ *        individual cards by name for loading saved games.
+ */
+class CardFactory {
 public:
-    // Delete copy and assignment operations
+    // Disable copy and assignment to preserve singleton nature
     CardFactory(const CardFactory &) = delete;
     CardFactory &operator=(const CardFactory &) = delete;
 
-    // Singleton access method - returns shared_ptr instead of raw pointer
+    /**
+     * @brief Get the singleton instance of the CardFactory.
+     * @return A shared_ptr to the CardFactory instance.
+     */
     static std::shared_ptr<CardFactory> getFactory();
 
-    // Get a new deck with all cards
+    /**
+     * @brief Create and return a deck populated with all the game's cards in a random order.
+     * @return A unique_ptr to a newly created and shuffled Deck.
+     */
     std::unique_ptr<Deck> getDeck();
 
-    // Helper methods to create specific cards (used for loading games)
+    /**
+     * @brief Create a single card by its name. Used when loading a saved game.
+     * @param cardName The name of the card to create (e.g. "Blue", "Chili").
+     * @return A unique_ptr to the newly created Card.
+     * @throws std::runtime_error if the card name is invalid.
+     */
     std::unique_ptr<Card> createCard(const std::string &cardName);
 
-    // Cleanup method
-    static void cleanup()
-    {
+    /**
+     * @brief Cleanup the CardFactory instance. Resets the singleton.
+     */
+    static void cleanup() {
         std::cout << "Starting CardFactory cleanup...\n";
         instance.reset();
         std::cout << "CardFactory cleanup complete\n";
     }
 
-    ~CardFactory()
-    {
-        try
-        {
+    ~CardFactory() {
+        try {
             cards.clear();
-                }
-        catch (const std::exception &e)
-        {
+        }
+        catch (const std::exception &e) {
             std::cerr << "Error in CardFactory destructor: " << e.what() << "\n";
         }
         std::cout << "CardFactory destructor end\n";
     }
 
 private:
-    // Private constructor for singleton
+    // Private constructor for the singleton
     CardFactory();
 
     // Singleton instance
     static std::shared_ptr<CardFactory> instance;
 
-    // Single container for all cards
+    // Map from card name to a vector of unique_ptr<Card> representing the card pool
     std::map<std::string, std::vector<std::unique_ptr<Card>>> cards;
 
-    // Helper method to initialize card pools
+    /**
+     * @brief Initialize the card pools with the correct number of each bean type.
+     */
     void initializeCards();
 };
 
