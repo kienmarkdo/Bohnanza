@@ -6,7 +6,7 @@ This project is a C++ implementation of the card game [Bohnanza](https://www.you
 > [!NOTE]  
 > Your C++ compiler must have c++14 support.
 ```console
-# On UNIX (MacOS, Linux)
+# On UNIX (e.g. MacOS, Linux, Windows Git Bash)
 ./play.sh
 
 # On Windows
